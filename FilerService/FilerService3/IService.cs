@@ -8,40 +8,41 @@ using System.Text;
 
 namespace FilerService3
 {
-    // NOTE: You can use the "Rename" command on the "Refactor" menu to change the interface name "IService1" in both code and config file together.
     [ServiceContract]
-    public interface IService
+    public interface IFilerService
     {
 
-        [OperationContract]
-        string GetData(int value);
+        [WebInvoke(Method = "POST", UriTemplate = "/save")]
+        void AddFile(ResourceData data);
 
-        [OperationContract]
-        CompositeType GetDataUsingDataContract(CompositeType composite);
+        [WebInvoke(Method = "DELETE", UriTemplate = "/")]
+        void Delete(ResourceData Nickname);
 
-        // TODO: Add your service operations here
-    }
+        [WebGet(UriTemplate = "/File")]
+        ResourceData GetFullFile(ResourceData data);
 
+        [WebGet(UriTemplate = "/Search")]
+        SearchData DoSearch(ResourceData data);
 
-    // Use a data contract as illustrated in the sample below to add composite types to service operations.
-    [DataContract]
-    public class CompositeType
-    {
-        bool boolValue = true;
-        string stringValue = "Hello ";
+        [WebInvoke(Method = "POST", UriTemplate = "/Tag")]
+        void MakeNewTag(ResourceData data);
 
-        [DataMember]
-        public bool BoolValue
-        {
-            get { return boolValue; }
-            set { boolValue = value; }
-        }
+        [WebGet(UriTemplate = "Files/Recent")]
+        SearchData GetRecentlyFiled();
 
-        [DataMember]
-        public string StringValue
-        {
-            get { return stringValue; }
-            set { stringValue = value; }
-        }
+        [WebGet(UriTemplate = "/tags")]
+        TagData GetAllTags();
+
+        [WebGet(UriTemplate = "/tags/last")]
+        ResourceData GetLastTags();
+
+        [WebInvoke(Method = "POST", UriTemplate = "toDoList")]
+        void AddNewTask(OneTask task);
+
+        [WebInvoke(Method = "POST", UriTemplate = "toDoList/remove")]
+        void RemoveTask(OneTask task);
+
+        [WebGet(UriTemplate = "/toDoList")]
+        TaskData GetToDoList();
     }
 }
