@@ -1,2 +1,10 @@
-﻿delete from Links
-where DataID = 8
+﻿insert into Links (Link, Name, Date)
+values (data.Link, data.LinkName, data.Date)
+insert into Classes (Class)
+values (data.Class)
+insert into Units (Unit)
+values (data.Unit)
+insert into Sections (Section)
+values (data.Section)
+insert into Types (Type)
+values (data.Type)

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data.SqlClient;
 using System.Linq;
+using System.Net;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.ServiceModel.Web;
@@ -35,7 +37,107 @@ namespace FilerService3
         /// <param name="data"></param>
         public void AddFile(ResourceData data)
         {
-            throw new NotImplementedException();
+            //Dub our local variables:
+            string linkName = data.LinkName;
+            string fileName = data.FileName;
+            string link = data.Link;
+            string file = data.File;
+            string date = data.Date;
+            string myClass = data.Class;
+            string unit = data.Unit;
+            string section = data.Section;
+            string type = data.Type;
+
+            if(!CanBeAdded(data)) //Only returns false if item is found in DB & override = false;
+            {
+                //Return status code 409(conflict)
+            }
+            //Check to see if data is a link or file.
+            if(data.isLink)
+            {
+                //add the link to the database.
+                using (SqlConnection conn = new SqlConnection(FilerDB))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        using (SqlCommand command = new SqlCommand("insert into Links (Link, Name, Date)" +
+                                            "values(@link, @linkName, @date)" +
+                                            "insert into Classes(Class)" +
+                                            "values(@myClass)" +
+                                            "insert into Units(Unit)" +
+                                            "values(@unit)" +
+                                            "insert into Sections(Section)" +
+                                            "values(@section)" +
+                                            "insert into Types(Type)" +
+                                            "values(@type)", conn, trans))
+                        {
+                            command.Parameters.AddWithValue("@link", link);
+                            command.Parameters.AddWithValue("@linkName", linkName);
+                            command.Parameters.AddWithValue("@date", date);
+                            command.Parameters.AddWithValue("@myClass", myClass);
+                            command.Parameters.AddWithValue("@unit", unit);
+                            command.Parameters.AddWithValue("@section", section);
+                            command.Parameters.AddWithValue("@type", type);
+
+                            command.ExecuteNonQuery();
+                            trans.Commit();
+                        }
+                    }
+                }
+                //Return 201(accepted).
+            }
+
+            else
+            {
+                //add the file to the database.
+                using (SqlConnection conn = new SqlConnection(FilerDB))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        using (SqlCommand command = new SqlCommand("insert into Files (File, Name, Date)" +
+                                            "values(@file, @fileName, @date)" +
+                                            "insert into Classes(Class)" +
+                                            "values(@myClass)" +
+                                            "insert into Units(Unit)" +
+                                            "values(@unit)" +
+                                            "insert into Sections(Section)" +
+                                            "values(@section)" +
+                                            "insert into Types(Type)" +
+                                            "values(@type)", conn, trans))
+                        {
+                            command.Parameters.AddWithValue("@file", file);
+                            command.Parameters.AddWithValue("@fileName", fileName);
+                            command.Parameters.AddWithValue("@date", date);
+                            command.Parameters.AddWithValue("@myClass", myClass);
+                            command.Parameters.AddWithValue("@unit", unit);
+                            command.Parameters.AddWithValue("@section", section);
+                            command.Parameters.AddWithValue("@type", type);
+
+                            command.ExecuteNonQuery();
+                            trans.Commit();
+                        }
+                    }
+                }
+                //Return 201(accepted).
+            }
+
+        }
+
+        private static void SetStatus(HttpStatusCode status)
+        {
+            WebOperationContext.Current.OutgoingResponse.StatusCode = status;
+        }
+
+
+        private bool CanBeAdded(ResourceData data)
+        {
+            //Check DB to see if name, class, unit, and section all match entry in DB.
+            //If so check to see if we override this time.
+            //If we don't override this time return false.
+            //If we do perform a delete operation and return true.
+            return false;
         }
 
         /// <summary>

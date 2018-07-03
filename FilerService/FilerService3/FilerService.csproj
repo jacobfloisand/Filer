@@ -100,7 +100,7 @@
           <AutoAssignPort>True</AutoAssignPort>
           <DevelopmentServerPort>50720</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
-          <IISUrl>http://localhost:50720/</IISUrl>
+          <IISUrl>http://localhost:1993/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
           <CustomServerUrl>
