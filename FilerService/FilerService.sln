@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilerService", "FilerService3\FilerService.csproj", "{14E64849-34E3-4F23-A69D-FF7AB93D4B57}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilerServiceTests", "FilerServiceTests\FilerServiceTests.csproj", "{EFDBCDF9-2E31-4D05-8572-3C9D5A22AEDD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilerServiceTests2", "FilerServiceTests2\FilerServiceTests2.csproj", "{64F94666-5DBE-4F0A-AF01-2FA0C1D56713}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{14E64849-34E3-4F23-A69D-FF7AB93D4B57}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14E64849-34E3-4F23-A69D-FF7AB93D4B57}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14E64849-34E3-4F23-A69D-FF7AB93D4B57}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EFDBCDF9-2E31-4D05-8572-3C9D5A22AEDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EFDBCDF9-2E31-4D05-8572-3C9D5A22AEDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EFDBCDF9-2E31-4D05-8572-3C9D5A22AEDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EFDBCDF9-2E31-4D05-8572-3C9D5A22AEDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64F94666-5DBE-4F0A-AF01-2FA0C1D56713}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64F94666-5DBE-4F0A-AF01-2FA0C1D56713}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64F94666-5DBE-4F0A-AF01-2FA0C1D56713}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64F94666-5DBE-4F0A-AF01-2FA0C1D56713}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
