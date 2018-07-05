@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using Microsoft.CSharp;
 
-namespace FilerServiceTests2
+namespace FilerServiceTests
 {
     [TestClass]
     public class ServiceTests
@@ -23,8 +23,10 @@ namespace FilerServiceTests2
             d.Unit = "The Beginning";
             d.Section = "Coming to Shore";
             d.Type = "Helpful Resources";
-            d.isLink = false;
-            d.Override = true;
+            d.isLink = "false";
+            d.Override = "true";
+            d.Link = "www.thisisnotused.com";
+            d.LinkName = "placeholder";
             Response r = client.DoPostAsync("save", d).Result;
             Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
 
@@ -34,7 +36,7 @@ namespace FilerServiceTests2
         public void TestMethod2()
         {
             dynamic d = new ExpandoObject();
-            d.Address = "www.history.com";
+            d.Link = "www.history.com";
             d.Date = "7/3/2018";
             d.LinkName = "HistoryDoc";
             d.Class = "US History";

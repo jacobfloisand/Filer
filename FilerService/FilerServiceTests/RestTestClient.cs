@@ -6,7 +6,7 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using System.Net;
 
-namespace FilerServiceTests2
+namespace FilerServiceTests
 {
     /// <summary>
     /// The struct that is returned by the RestClient methods below

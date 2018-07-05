@@ -6,7 +6,7 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Text;
 
-namespace FilerService3
+namespace FilerService
 {
     [ServiceContract]
     public interface IFilerService

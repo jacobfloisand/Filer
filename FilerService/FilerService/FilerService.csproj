@@ -76,7 +76,7 @@
     <Compile Include="FilerService.svc.cs">
       <DependentUpon>FilerService.svc</DependentUpon>
     </Compile>
-    <Compile Include="IService.cs" />
+    <Compile Include="IFilerService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

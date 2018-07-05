@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
-using System.Linq;
+using System.IO;
 using System.Net;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.ServiceModel.Web;
-using System.Text;
 
-namespace FilerService3
+namespace FilerService
 {
     
     public class FilerService : IFilerService
@@ -18,7 +17,7 @@ namespace FilerService3
 
         static FilerService()
         {
-            FilerDB = ConfigurationManager.ConnectionStrings["BoggleDB"].ConnectionString;
+            FilerDB = ConfigurationManager.ConnectionStrings["FilerDB"].ConnectionString;
         }
 
         /// <summary>
@@ -53,7 +52,7 @@ namespace FilerService3
                 //Return status code 409(conflict)
             }
             //Check to see if data is a link or file.
-            if(data.isLink)
+            if(data.isLink.Equals(true))
             {
                 //add the link to the database.
                 using (SqlConnection conn = new SqlConnection(FilerDB))

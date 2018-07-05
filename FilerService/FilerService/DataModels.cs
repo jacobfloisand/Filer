@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Web;
 
-namespace FilerService3
+namespace FilerService
 {
    
     [DataContract]
@@ -29,9 +29,9 @@ namespace FilerService3
         [DataMember(EmitDefaultValue = false)]
         public string Type { get; set; }
         [DataMember(EmitDefaultValue = false)]
-        public bool isLink { get; set; }
+        public string isLink { get; set; }
         [DataMember(EmitDefaultValue = false)]
-        public bool Override { get; set; }
+        public string Override { get; set; }
     }
 
     [DataContract]
