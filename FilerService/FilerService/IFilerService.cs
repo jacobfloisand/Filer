@@ -18,11 +18,11 @@ namespace FilerService
         [WebInvoke(Method = "DELETE", UriTemplate = "/")]
         void Delete(ResourceData Nickname);
 
-        [WebGet(UriTemplate = "/File")]
-        ResourceData GetFullFile(ResourceData data);
+        [WebGet(UriTemplate = "/File/{Class}/{Unit}/{Section}/{Name}")]
+        ResourceData GetFullFile(string Class, String Unit, String Section, String Name);
 
-        [WebGet(UriTemplate = "/Search")]
-        SearchData DoSearch(ResourceData data);
+        [WebGet(UriTemplate = "/Search/{Class}/{Unit}/{Section}/{Name}/{Date}/{Type}")]
+        SearchData DoSearch(string Class, string Unit, string Section, string Name, string Date, string Type);
 
         [WebInvoke(Method = "POST", UriTemplate = "/Tag")]
         void MakeNewTag(ResourceData data);

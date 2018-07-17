@@ -89,13 +89,43 @@ namespace FilerService
 
             else
             {
-                //add the file to the database.
+                //add the file to the database. We will add the file tags in another transaction.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        using (SqlCommand command = new SqlCommand("insert into Files (File, Name, Date)" +
+                        using (SqlCommand command = new SqlCommand("insert into Files (Archive, Name, Date)" +
+                                            "values(@file, @fileName, @date)" +
+                                            "insert into Classes(Class)" +
+                                            "values(@myClass)" +
+                                            "insert into Units(Unit)" +
+                                            "values(@unit)" +
+                                            "insert into Sections(Section)" +
+                                            "values(@section)" +
+                                            "insert into Types(Type)" +
+                                            "values(@type)", conn, trans))
+                        {
+                            command.Parameters.AddWithValue("@file", file);
+                            command.Parameters.AddWithValue("@fileName", fileName);
+                            command.Parameters.AddWithValue("@date", date);
+                            command.Parameters.AddWithValue("@myClass", myClass);
+                            command.Parameters.AddWithValue("@unit", unit);
+                            command.Parameters.AddWithValue("@section", section);
+                            command.Parameters.AddWithValue("@type", type);
+
+                            command.ExecuteNonQuery();
+                            trans.Commit();
+                        }
+                    }
+                }
+                //Now add the tag information for the file. We will need to change the DB so it reaturns the DataID.
+                using (SqlConnection conn = new SqlConnection(FilerDB))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        using (SqlCommand command = new SqlCommand("insert into Files (Archive, Name, Date)" +
                                             "values(@file, @fileName, @date)" +
                                             "insert into Classes(Class)" +
                                             "values(@myClass)" +
@@ -173,7 +203,7 @@ namespace FilerService
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public SearchData DoSearch(ResourceData data)
+        public SearchData DoSearch(string Class, string Unit, string Section, string Name, string Date, string Type)
         {
             throw new NotImplementedException();
         }
@@ -196,7 +226,7 @@ namespace FilerService
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public ResourceData GetFullFile(ResourceData data)
+        public ResourceData GetFullFile(string Class, String Unit, String Section, String Name)
         {
             throw new NotImplementedException();
         }
