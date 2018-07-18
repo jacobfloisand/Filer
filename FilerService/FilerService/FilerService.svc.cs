@@ -46,45 +46,69 @@ namespace FilerService
             string unit = data.Unit;
             string section = data.Section;
             string type = data.Type;
+            int dataID = 0;
+            string isLink = data.isLink;
 
             if(!CanBeAdded(data)) //Only returns false if item is found in DB & override = false;
             {
                 //Return status code 409(conflict)
             }
             //Check to see if data is a link or file.
-            if(data.isLink.Equals(true))
+            if(isLink.Equals("true"))
             {
-                //add the link to the database.
+                //add the link to the database. Another transaction is used for the tags
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
                         using (SqlCommand command = new SqlCommand("insert into Links (Link, Name, Date)" +
-                                            "values(@link, @linkName, @date)" +
-                                            "insert into Classes(Class)" +
-                                            "values(@myClass)" +
-                                            "insert into Units(Unit)" +
-                                            "values(@unit)" +
-                                            "insert into Sections(Section)" +
-                                            "values(@section)" +
-                                            "insert into Types(Type)" +
-                                            "values(@type)", conn, trans))
+                                            "values(@link, @linkName, @date)", conn, trans))
                         {
                             command.Parameters.AddWithValue("@link", link);
                             command.Parameters.AddWithValue("@linkName", linkName);
                             command.Parameters.AddWithValue("@date", date);
+
+                            using (SqlDataReader reader = command.ExecuteReader())
+                            {
+                                reader.Read();
+                                dataID = reader.GetInt32(0);
+                            }
+
+                            trans.Commit();
+                        }
+                    }
+                }
+
+
+                //Now add the tag information for the file. We will need to change the DB so it reaturns the DataID.
+                using (SqlConnection conn = new SqlConnection(FilerDB))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        using (SqlCommand command = new SqlCommand("insert into Classes(DataID, Class)" +
+                                            "values(@DataID, @myClass)" +
+                                            "insert into Units(DataID, Unit)" +
+                                            "values(@DataID, @unit)" +
+                                            "insert into Sections(DataID, Section)" +
+                                            "values(@DataID, @section)" +
+                                            "insert into Types(DataID, Type)" +
+                                            "values(@DataID, @type)", conn, trans))
+                        {
                             command.Parameters.AddWithValue("@myClass", myClass);
                             command.Parameters.AddWithValue("@unit", unit);
                             command.Parameters.AddWithValue("@section", section);
                             command.Parameters.AddWithValue("@type", type);
+                            command.Parameters.AddWithValue("@DataID", dataID);
 
                             command.ExecuteNonQuery();
                             trans.Commit();
                         }
                     }
                 }
-                //Return 201(accepted).
+                SetStatus(HttpStatusCode.Accepted);
+                return;
             }
 
             else
@@ -96,60 +120,51 @@ namespace FilerService
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
                         using (SqlCommand command = new SqlCommand("insert into Files (Archive, Name, Date)" +
-                                            "values(@file, @fileName, @date)" +
-                                            "insert into Classes(Class)" +
-                                            "values(@myClass)" +
-                                            "insert into Units(Unit)" +
-                                            "values(@unit)" +
-                                            "insert into Sections(Section)" +
-                                            "values(@section)" +
-                                            "insert into Types(Type)" +
-                                            "values(@type)", conn, trans))
+                                            "values(@file, @fileName, @date)", conn, trans))
                         {
                             command.Parameters.AddWithValue("@file", file);
                             command.Parameters.AddWithValue("@fileName", fileName);
                             command.Parameters.AddWithValue("@date", date);
-                            command.Parameters.AddWithValue("@myClass", myClass);
-                            command.Parameters.AddWithValue("@unit", unit);
-                            command.Parameters.AddWithValue("@section", section);
-                            command.Parameters.AddWithValue("@type", type);
 
-                            command.ExecuteNonQuery();
+                            using (SqlDataReader reader = command.ExecuteReader())
+                            {
+                                reader.Read();
+                                dataID = reader.GetInt32(0);
+                            }
+                            
                             trans.Commit();
                         }
                     }
                 }
+
+
                 //Now add the tag information for the file. We will need to change the DB so it reaturns the DataID.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        using (SqlCommand command = new SqlCommand("insert into Files (Archive, Name, Date)" +
-                                            "values(@file, @fileName, @date)" +
-                                            "insert into Classes(Class)" +
-                                            "values(@myClass)" +
-                                            "insert into Units(Unit)" +
-                                            "values(@unit)" +
-                                            "insert into Sections(Section)" +
-                                            "values(@section)" +
-                                            "insert into Types(Type)" +
-                                            "values(@type)", conn, trans))
+                        using (SqlCommand command = new SqlCommand("insert into Classes(DataID, Class)" +
+                                            "values(@DataID, @myClass)" +
+                                            "insert into Units(DataID, Unit)" +
+                                            "values(@DataID, @unit)" +
+                                            "insert into Sections(DataID, Section)" +
+                                            "values(@DataID, @section)" +
+                                            "insert into Types(DataID, Type)" +
+                                            "values(@DataID, @type)", conn, trans))
                         {
-                            command.Parameters.AddWithValue("@file", file);
-                            command.Parameters.AddWithValue("@fileName", fileName);
-                            command.Parameters.AddWithValue("@date", date);
                             command.Parameters.AddWithValue("@myClass", myClass);
                             command.Parameters.AddWithValue("@unit", unit);
                             command.Parameters.AddWithValue("@section", section);
                             command.Parameters.AddWithValue("@type", type);
+                            command.Parameters.AddWithValue("@DataID", dataID);
 
                             command.ExecuteNonQuery();
                             trans.Commit();
                         }
                     }
                 }
-                //Return 201(accepted).
+                SetStatus(HttpStatusCode.Accepted);
             }
 
         }
