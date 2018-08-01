@@ -328,7 +328,15 @@ namespace FilerService
 
                             using (SqlDataReader reader = command.ExecuteReader())
                             {
-                                dataID = reader.GetInt32(0);
+                                if (reader.Read())
+                                {
+                                    dataID = reader.GetInt32(0);
+                                }
+                                else
+                                {
+                                    SetStatus(HttpStatusCode.Conflict);
+                                    return;
+                                }
                             }
                             trans.Commit();
                         }
@@ -340,17 +348,18 @@ namespace FilerService
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        using (SqlCommand command = new SqlCommand("Delete from Sections where DataID = @DataID" +
-                                                                    "Delete from Units where DataID = @DataID" +
-                                                                    "Delete from Classes where DataID = @DataID" +
-                                                                    "Delete from Types where DataID = @DataID" +
+                        using (SqlCommand command = new SqlCommand("Delete from Sections where DataID = @DataID " +
+                                                                    "Delete from Units where DataID = @DataID " +
+                                                                    "Delete from Classes where DataID = @DataID " +
+                                                                    "Delete from Types where DataID = @DataID " +
                                                                     "Delete from Links where DataID = @DataID", conn, trans))
                         {
                             command.Parameters.AddWithValue("@DataID", dataID);
 
                             using (SqlDataReader reader = command.ExecuteReader())
                             {
-                                int numDeleted = reader.GetInt32(0); //This is where we need to check if something was deleted or not. 1 = deleted. 0 = not deleted.
+                                reader.Read();
+                                int numDeleted = reader.RecordsAffected; //This is where we need to check if something was deleted or not. 1 = deleted. 0 = not deleted.
                                 if (numDeleted == 1)
                                 {
                                     SetStatus(HttpStatusCode.OK);
@@ -385,7 +394,16 @@ namespace FilerService
 
                             using (SqlDataReader reader = command.ExecuteReader())
                             {
-                                dataID = reader.GetInt32(0);
+                                if(reader.Read())
+                                {
+                                    dataID = reader.GetInt32(0);
+                                }
+                                else
+                                {
+                                    SetStatus(HttpStatusCode.Conflict);
+                                    return;
+                                }
+
                             }
                             trans.Commit();
                         }
@@ -397,17 +415,18 @@ namespace FilerService
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        using (SqlCommand command = new SqlCommand("Delete from Sections where DataID = @DataID" +
-                                                                    "Delete from Units where DataID = @DataID" +
-                                                                    "Delete from Classes where DataID = @DataID" +
-                                                                    "Delete from Types where DataID = @DataID" +
+                        using (SqlCommand command = new SqlCommand("Delete from Sections where DataID = @DataID " +
+                                                                    "Delete from Units where DataID = @DataID " +
+                                                                    "Delete from Classes where DataID = @DataID " +
+                                                                    "Delete from Types where DataID = @DataID " +
                                                                     "Delete from Files where DataID = @DataID", conn, trans))
                         {
                             command.Parameters.AddWithValue("@DataID", dataID);
 
                             using (SqlDataReader reader = command.ExecuteReader())
                             {
-                                int numDeleted = reader.GetInt32(0); //This is where we need to check if something was deleted or not. 1 = deleted. 0 = not deleted.
+                                reader.Read();
+                                int numDeleted = reader.RecordsAffected; //This is where we need to check if something was deleted or not. 1 = deleted. 0 = not deleted.
                                 if (numDeleted == 1)
                                 {
                                     SetStatus(HttpStatusCode.OK);

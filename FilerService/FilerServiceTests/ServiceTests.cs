@@ -29,7 +29,8 @@ namespace FilerServiceTests
             d.LinkName = "placeholder";
             Response r = client.DoPostAsync("save", d).Result;
             Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
-            client.DoPostAsync("delete", d);
+            Response s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
 
         }
 
@@ -48,52 +49,171 @@ namespace FilerServiceTests
             d.Override = "true";
             Response r = client.DoPostAsync("save", d).Result;
             Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
-            client.DoPostAsync("delete", d);
-        }
-/*
-        [TestMethod]
-        public void TestMethod2()
-        {
-            //What happens if some values are null when adding a file
+            Response s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
         }
 
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethod3()  //What happens if some values are null when adding a file
+
         {
-            //What happens if some values are null when adding a link
+            dynamic d = new ExpandoObject();
+            d.File = "This is the history of the united states beginning with its founding fathers...";
+            d.Date = "7/3/2018";
+            d.FileName = "HistoryDoc";
+            d.Class = "US History";
+            d.Unit = "The Beginning";
+            d.Type = "Helpful Resources";
+            d.isLink = "false";
+            d.Override = "true";
+            d.Link = "www.thisisnotused.com";
+            d.LinkName = "placeholder";
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            Response s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
         }
 
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethod4()  //What happens if some values are null when adding a link
+
+        {
+            dynamic d = new ExpandoObject();
+            d.Link = "www.history.com";
+            d.Date = "7/3/2018";
+            d.LinkName = "HistoryLink";
+            d.Type = "Helpful Resources";
+            d.isLink = "true";
+            d.Override = "true";
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            Response s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+        }
+
+        [TestMethod]
+        public void TestMethod5()
         {
             //What happens if all values are null when adding a file
+            dynamic d = new ExpandoObject();
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Forbidden);
         }
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethod6()
         {
             //What happens if all values are null when adding a link.
+            dynamic d = new ExpandoObject();
+            d.isLink = "true";
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Forbidden);
         }
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethod7()
         {
             //Add file that is already in DB.
+            dynamic d = new ExpandoObject();
+            d.File = "This is the history of the united states beginning with its founding fathers...";
+            d.Date = "7/3/2018";
+            d.FileName = "HistoryDoc";
+            d.Class = "US History";
+            d.Unit = "The Beginning";
+            d.Section = "Coming to Shore";
+            d.Type = "Helpful Resources";
+            d.isLink = "false";
+            d.Override = "true";
+            d.Link = "www.thisisnotused.com";
+            d.LinkName = "placeholder";
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+
+            Response s = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.Conflict);
+
+            Response t = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(t.Status, HttpStatusCode.OK);
         }
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethod8()
         {
             //Add link that is already in DB.
+            dynamic d = new ExpandoObject();
+            d.Link = "www.history.com";
+            d.Date = "7/3/2018";
+            d.LinkName = "HistoryLink";
+            d.Class = "US History";
+            d.Unit = "The Beginning";
+            d.Section = "Coming to Shore";
+            d.Type = "Helpful Resources";
+            d.isLink = "true";
+            d.Override = "true";
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+
+            Response s = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.Accepted);
+
+            Response t = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(t.Status, HttpStatusCode.OK);
         }
 
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethod9() //This won't work until we implement do Search.
         {
             //Make sure previous link is overriden when true. And not overridden when false.
+            dynamic d = new ExpandoObject();
+            d.Link = "www.history.com";
+            d.Date = "7/3/2018";
+            d.LinkName = "HistoryLink";
+            d.Class = "US History";
+            d.Unit = "The Beginning";
+            d.Section = "Coming to Shore";
+            d.Type = "Helpful Resources";
+            d.isLink = "true";
+            d.Override = "true";
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+
+            d.Link = "www.historycnn.com";
+            Response s = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.Accepted);
+
+            dynamic a = client.DoGetAsync("Search/US History/The Beginning/Coming to Shore/HistoryLink/7/3/2018/Helpful Resources").Result;
+            Assert.AreEqual(a.L1Address, "www.historycnn.com");
+
+            //Deletes the link from DB.
+            Response t = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(t.Status, HttpStatusCode.OK);
         }
 
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethod10()//This won't work until we implement do Search.
         {
             //Make sure previous file is overridden when true. And not overriden when false.
+            dynamic d = new ExpandoObject();
+            d.File = "This is the history of the united states beginning with its founding fathers...";
+            d.Date = "7/3/2018";
+            d.FileName = "HistoryDoc";
+            d.Class = "US History";
+            d.Unit = "The Beginning";
+            d.Section = "Coming to Shore";
+            d.Type = "Helpful Resources";
+            d.isLink = "false";
+            d.Override = "true";
+            d.Link = "www.thisisnotused.com";
+            d.LinkName = "placeholder";
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+
+            d.File = "This is a nice story about the gunshot that was heard all around the world.";
+            Response s = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.Accepted);
+
+            dynamic a = client.DoGetAsync("File/US History/The Beginning/Coming to Shore/HistoryDoc").Result;
+            Assert.AreEqual(a.File, "This is a nice story about the gunshot that was heard all around the world.");
+
+            Response t = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(t.Status, HttpStatusCode.OK);
         }
 
         [TestMethod]
@@ -332,6 +452,6 @@ namespace FilerServiceTests
 
         //------------------End of Get last used tags tests----------------------
         
-    */
+    
     }
 }
