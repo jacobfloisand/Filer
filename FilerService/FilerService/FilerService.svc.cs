@@ -194,7 +194,7 @@ namespace FilerService
 
             //Check DB to see if name, class, unit, and section all match entry in DB. If Override is true we just delete right away. If nothing is deleted it wasn't there to begin with.
             //Only do this first one if it's a link.
-            if (isLink.Equals(true))
+            if (isLink.Equals("true"))
             {
 
 
