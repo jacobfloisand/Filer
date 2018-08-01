@@ -32,6 +32,7 @@ namespace FilerService
         /// isLink
         /// Override - true if this name is to override any file with the same information
         ///     in the DB.
+        /// Note: This method does not update the tag file with the DB.
         /// </summary>
         /// <param name="data"></param>
         public void AddFile(ResourceData data)
@@ -49,14 +50,15 @@ namespace FilerService
             int dataID = 0;
             string isLink = data.isLink;
 
-            if(!CanBeAdded(data)) //Only returns false if item is found in DB & override = false;
+            if(!CanBeAdded(data)) //Should only be run if override is false and the item exists in DB.
             {
-                //Return status code 409(conflict)
+                SetStatus(HttpStatusCode.Conflict);
+                return;
             }
             //Check to see if data is a link or file.
             if(isLink.Equals("true"))
             {
-                //add the link to the database. Another transaction is used for the tags
+                //add the link to the database. Another transaction is used for the tags.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
@@ -81,7 +83,7 @@ namespace FilerService
                 }
 
 
-                //Now add the tag information for the file. We will need to change the DB so it reaturns the DataID.
+                //Now add the tag information for the file.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
@@ -138,7 +140,7 @@ namespace FilerService
                 }
 
 
-                //Now add the tag information for the file. We will need to change the DB so it reaturns the DataID.
+                //Now add the tag information for the file.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
@@ -177,7 +179,100 @@ namespace FilerService
 
         private bool CanBeAdded(ResourceData data)
         {
-            //Check DB to see if name, class, unit, and section all match entry in DB.
+            string linkName = data.LinkName;
+            string fileName = data.FileName;
+            string link = data.Link;
+            string file = data.File;
+            string date = data.Date;
+            string myClass = data.Class;
+            string unit = data.Unit;
+            string section = data.Section;
+            string type = data.Type;
+            int dataID = 0;
+            string isLink = data.isLink;
+            bool isMatch = false;
+
+            //Check DB to see if name, class, unit, and section all match entry in DB. If Override is true we just delete right away. If nothing is deleted it wasn't there to begin with.
+            //Only do this first one if it's a link.
+            if (isLink.Equals(true))
+            {
+
+
+                using (SqlConnection conn = new SqlConnection(FilerDB))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        using (SqlCommand command = new SqlCommand("Select Links.DataID from Links, Classes, Units, Sections where Links.Name = @linkName AND Classes.Class = @myClass AND Units.Unit = @unit AND Sections.Section = @section", conn, trans))
+                        {
+                            command.Parameters.AddWithValue("@myClass", myClass);
+                            command.Parameters.AddWithValue("@unit", unit);
+                            command.Parameters.AddWithValue("@section", section);
+                            command.Parameters.AddWithValue("@type", type);
+                            command.Parameters.AddWithValue("@DataID", dataID);
+                            command.Parameters.AddWithValue("@linkName", linkName);
+
+                            using (SqlDataReader reader = command.ExecuteReader())
+                            {
+                                isMatch = reader.Read();
+                            }
+                            trans.Commit();
+                        }
+                    }
+                    if (!isMatch) //If we didn't find a match in the DB.
+                    {
+                        return true;
+                    }
+                    if (data.Override.Equals(true)) //If we found a match and override is true...
+                    {
+                        //Delete the item we found.
+                        Delete(data);
+                        return true;
+                    }
+                    //If we found a match and override is not true...
+                    return false;
+                }
+            }
+
+            //If the item we are adding is not a link...
+            
+
+
+            using (SqlConnection conn = new SqlConnection(FilerDB))
+            {
+                conn.Open();
+                using (SqlTransaction trans = conn.BeginTransaction())
+                {
+                    using (SqlCommand command = new SqlCommand("Select Files.DataID from Files, Classes, Units, Sections where Files.Name = @fileName AND Classes.Class = @myClass AND Units.Unit = @unit AND Sections.Section = @section", conn, trans))
+                    {
+                        command.Parameters.AddWithValue("@myClass", myClass);
+                        command.Parameters.AddWithValue("@unit", unit);
+                        command.Parameters.AddWithValue("@section", section);
+                        command.Parameters.AddWithValue("@type", type);
+                        command.Parameters.AddWithValue("@DataID", dataID);
+                        command.Parameters.AddWithValue("@fileName", fileName);
+
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            isMatch = reader.Read();
+                        }
+                        trans.Commit();
+                    }
+                }
+                if (!isMatch) //If we didn't find a match in the DB.
+                {
+                    return true;
+                }
+                if (data.Override.Equals(true)) //If we found a match and override is true...
+                {
+                    //Delete the item we found.
+                    Delete(data);
+                    return true;
+                }
+                //If we found a match and override is not true...
+                return false;
+            }
+            
             //If so check to see if we override this time.
             //If we don't override this time return false.
             //If we do perform a delete operation and return true.
