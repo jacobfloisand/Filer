@@ -29,6 +29,7 @@ namespace FilerServiceTests
             d.LinkName = "placeholder";
             Response r = client.DoPostAsync("save", d).Result;
             Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            client.DoPostAsync("delete", d);
 
         }
 
@@ -47,9 +48,9 @@ namespace FilerServiceTests
             d.Override = "true";
             Response r = client.DoPostAsync("save", d).Result;
             Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
-
+            client.DoPostAsync("delete", d);
         }
-
+/*
         [TestMethod]
         public void TestMethod2()
         {
@@ -330,7 +331,7 @@ namespace FilerServiceTests
         }
 
         //------------------End of Get last used tags tests----------------------
-
-
+        
+    */
     }
 }

@@ -374,14 +374,14 @@ namespace FilerService
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        using (SqlCommand command = new SqlCommand("Select Files.DataID from Files, Classes, Units, Sections where Files.Name = @linkName AND Classes.Class = @myClass AND Units.Unit = @unit AND Sections.Section = @section", conn, trans))
+                        using (SqlCommand command = new SqlCommand("Select Files.DataID from Files, Classes, Units, Sections where Files.Name = @FileName AND Classes.Class = @myClass AND Units.Unit = @unit AND Sections.Section = @section", conn, trans))
                         {
                             command.Parameters.AddWithValue("@myClass", myClass);
                             command.Parameters.AddWithValue("@unit", unit);
                             command.Parameters.AddWithValue("@section", section);
                             command.Parameters.AddWithValue("@type", type);
                             command.Parameters.AddWithValue("@DataID", dataID);
-                            command.Parameters.AddWithValue("@FileName", linkName);
+                            command.Parameters.AddWithValue("@FileName", fileName);
 
                             using (SqlDataReader reader = command.ExecuteReader())
                             {

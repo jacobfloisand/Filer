@@ -15,7 +15,7 @@ namespace FilerService
         [WebInvoke(Method = "POST", UriTemplate = "/save")]
         void AddFile(ResourceData data);
 
-        [WebInvoke(Method = "DELETE", UriTemplate = "/")]
+        [WebInvoke(Method = "POST", UriTemplate = "/delete")]
         void Delete(ResourceData Nickname);
 
         [WebGet(UriTemplate = "/File/{Class}/{Unit}/{Section}/{Name}")]
