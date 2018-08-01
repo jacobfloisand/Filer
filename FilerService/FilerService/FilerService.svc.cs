@@ -272,11 +272,7 @@ namespace FilerService
                 //If we found a match and override is not true...
                 return false;
             }
-            
-            //If so check to see if we override this time.
-            //If we don't override this time return false.
-            //If we do perform a delete operation and return true.
-            return false;
+           
         }
 
         /// <summary>
@@ -296,11 +292,140 @@ namespace FilerService
         /// Unit
         /// Section
         /// </summary>
-        /// <param name="Nickname"></param>
-        public void Delete(ResourceData Nickname)
+        /// <param name="data"></param>
+        public void Delete(ResourceData data)
         {
-            throw new NotImplementedException();
+            //Dub our local variables:
+            string linkName = data.LinkName;
+            string fileName = data.FileName;
+            string link = data.Link;
+            string file = data.File;
+            string date = data.Date;
+            string myClass = data.Class;
+            string unit = data.Unit;
+            string section = data.Section;
+            string type = data.Type;
+            int dataID = 0;
+            string isLink = data.isLink;
+
+            //This part is if what we are deleting is a link.
+            if (isLink.Equals("true"))
+            {
+                //First we need to find the DataID of the information that we want to remove.
+                using (SqlConnection conn = new SqlConnection(FilerDB))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        using (SqlCommand command = new SqlCommand("Select Links.DataID from Links, Classes, Units, Sections where Links.Name = @linkName AND Classes.Class = @myClass AND Units.Unit = @unit AND Sections.Section = @section", conn, trans))
+                        {
+                            command.Parameters.AddWithValue("@myClass", myClass);
+                            command.Parameters.AddWithValue("@unit", unit);
+                            command.Parameters.AddWithValue("@section", section);
+                            command.Parameters.AddWithValue("@type", type);
+                            command.Parameters.AddWithValue("@DataID", dataID);
+                            command.Parameters.AddWithValue("@linkName", linkName);
+
+                            using (SqlDataReader reader = command.ExecuteReader())
+                            {
+                                dataID = reader.GetInt32(0);
+                            }
+                            trans.Commit();
+                        }
+                    }
+                }
+                //Now we want to use the DataID we found to actually delete the information.
+                using (SqlConnection conn = new SqlConnection(FilerDB))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        using (SqlCommand command = new SqlCommand("Delete from Sections where DataID = @DataID" +
+                                                                    "Delete from Units where DataID = @DataID" +
+                                                                    "Delete from Classes where DataID = @DataID" +
+                                                                    "Delete from Types where DataID = @DataID" +
+                                                                    "Delete from Links where DataID = @DataID", conn, trans))
+                        {
+                            command.Parameters.AddWithValue("@DataID", dataID);
+
+                            using (SqlDataReader reader = command.ExecuteReader())
+                            {
+                                int numDeleted = reader.GetInt32(0); //This is where we need to check if something was deleted or not. 1 = deleted. 0 = not deleted.
+                                if (numDeleted == 1)
+                                {
+                                    SetStatus(HttpStatusCode.OK);
+                                }
+                                if (numDeleted == 0)
+                                {
+                                    SetStatus(HttpStatusCode.Conflict);
+                                }
+                            }
+                            trans.Commit();
+                        }
+                    }
+                }
+                return;
+            }
+            else //If the piece of data is a file.
+            {
+                //First we need to find the DataID of the information that we want to remove.
+                using (SqlConnection conn = new SqlConnection(FilerDB))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        using (SqlCommand command = new SqlCommand("Select Files.DataID from Files, Classes, Units, Sections where Files.Name = @linkName AND Classes.Class = @myClass AND Units.Unit = @unit AND Sections.Section = @section", conn, trans))
+                        {
+                            command.Parameters.AddWithValue("@myClass", myClass);
+                            command.Parameters.AddWithValue("@unit", unit);
+                            command.Parameters.AddWithValue("@section", section);
+                            command.Parameters.AddWithValue("@type", type);
+                            command.Parameters.AddWithValue("@DataID", dataID);
+                            command.Parameters.AddWithValue("@FileName", linkName);
+
+                            using (SqlDataReader reader = command.ExecuteReader())
+                            {
+                                dataID = reader.GetInt32(0);
+                            }
+                            trans.Commit();
+                        }
+                    }
+                }
+                //Now we want to use the DataID we found to actually delete the information.
+                using (SqlConnection conn = new SqlConnection(FilerDB))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        using (SqlCommand command = new SqlCommand("Delete from Sections where DataID = @DataID" +
+                                                                    "Delete from Units where DataID = @DataID" +
+                                                                    "Delete from Classes where DataID = @DataID" +
+                                                                    "Delete from Types where DataID = @DataID" +
+                                                                    "Delete from Files where DataID = @DataID", conn, trans))
+                        {
+                            command.Parameters.AddWithValue("@DataID", dataID);
+
+                            using (SqlDataReader reader = command.ExecuteReader())
+                            {
+                                int numDeleted = reader.GetInt32(0); //This is where we need to check if something was deleted or not. 1 = deleted. 0 = not deleted.
+                                if (numDeleted == 1)
+                                {
+                                    SetStatus(HttpStatusCode.OK);
+                                }
+                                if (numDeleted == 0)
+                                {
+                                    SetStatus(HttpStatusCode.Conflict);
+                                }
+                            }
+                            trans.Commit();
+                        }
+                    }
+                }
+                return;
+            }
+
         }
+    
 
         /// <summary>
         /// Searches DB using specified criteria. Usable fields are:
