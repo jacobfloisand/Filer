@@ -4,6 +4,7 @@ using System.Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using Microsoft.CSharp;
+using System.IO;
 
 namespace FilerServiceTests
 {
@@ -217,47 +218,208 @@ namespace FilerServiceTests
         }
 
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethod11()
         {
             //Try adding File/Link with no section specified.
+            dynamic d = new ExpandoObject();
+            d.File = "This is the history of the united states beginning with its founding fathers...";
+            d.Date = "7/3/2018";
+            d.FileName = "HistoryDoc";
+            d.Class = "US History";
+            d.Unit = "The Beginning";
+            d.Type = "Helpful Resources";
+            d.isLink = "false";
+            d.Override = "true";
+            d.Link = "www.thisisnotused.com";
+            d.LinkName = "placeholder";
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            Response s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+
+            d = new ExpandoObject();
+            d.Link = "www.history.com";
+            d.Date = "7/3/2018";
+            d.LinkName = "HistoryLink";
+            d.Class = "US History";
+            d.Unit = "The Beginning";
+            d.Type = "Helpful Resources";
+            d.isLink = "true";
+            d.Override = "true";
+            r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+
+
         }
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethod12() //This is all we need as far as testing specific files goes. It's all the same.
         {
             //Try adding File/Link with no Unit specified.
+            dynamic d = new ExpandoObject();
+            d.File = "This is the history of the united states beginning with its founding fathers...";
+            d.Date = "7/3/2018";
+            d.FileName = "HistoryDoc";
+            d.Class = "US History";
+            d.Section = "Coming to Shore";
+            d.Type = "Helpful Resources";
+            d.isLink = "false";
+            d.Override = "true";
+            d.Link = "www.thisisnotused.com";
+            d.LinkName = "placeholder";
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            Response s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+
+            d = new ExpandoObject();
+            d.Link = "www.history.com";
+            d.Date = "7/3/2018";
+            d.LinkName = "HistoryLink";
+            d.Class = "US History";
+            d.Section = "Coming to Shore";
+            d.Type = "Helpful Resources";
+            d.isLink = "true";
+            d.Override = "true";
+            r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
         }
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethod13()
         {
             //Try adding File/Link with no Class specified.
+            dynamic d = new ExpandoObject();
+            d.File = "This is the history of the united states beginning with its founding fathers...";
+            d.Date = "7/3/2018";
+            d.FileName = "HistoryDoc";
+            d.Unit = "The Beginning";
+            d.Section = "Coming to Shore";
+            d.Type = "Helpful Resources";
+            d.isLink = "false";
+            d.Override = "true";
+            d.Link = "www.thisisnotused.com";
+            d.LinkName = "placeholder";
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            Response s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+
+            d = new ExpandoObject();
+            d.Link = "www.history.com";
+            d.Date = "7/3/2018";
+            d.LinkName = "HistoryLink";
+            d.Unit = "The Beginning";
+            d.Section = "Coming to Shore";
+            d.Type = "Helpful Resources";
+            d.isLink = "true";
+            d.Override = "true";
+            r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
         }
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethod14()
         {
             //Try adding File/Link with no Name specified.
+            dynamic d = new ExpandoObject();
+            d.File = "This is the history of the united states beginning with its founding fathers...";
+            d.Date = "7/3/2018";
+            d.Class = "US History";
+            d.Unit = "The Beginning";
+            d.Section = "Coming to Shore";
+            d.Type = "Helpful Resources";
+            d.isLink = "false";
+            d.Override = "true";
+            d.Link = "www.thisisnotused.com";
+            d.LinkName = "placeholder";
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            Response s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+
+            d = new ExpandoObject();
+            d.Link = "www.history.com";
+            d.Date = "7/3/2018";
+            d.Class = "US History";
+            d.Unit = "The Beginning";
+            d.Section = "Coming to Shore";
+            d.Type = "Helpful Resources";
+            d.isLink = "true";
+            d.Override = "true";
+            r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
         }
 
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethod15() //Won't work until we make the GetFullFile method.
         {
-            //Works with .pdf's
-        }
+            //Works with actual files.
+            
+            //Read file as string.
+            string path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            path = System.IO.Path.Combine(path, "New members 7_29_18.pdf");
+            byte[] bytes = File.ReadAllBytes(path);
+            StringWriter writer = new StringWriter();
+            foreach (byte b in bytes)
+            {
+                writer.Write((char)b);
+            }
+            string myPdf = writer.ToString();
 
-        [TestMethod]
-        public void TestMethod2()
-        {
-            //Works with .docx's
+            //Store everything in the DB.
+            dynamic d = new ExpandoObject();
+            d.File = myPdf;
+            d.Date = "7/3/2018";
+            d.FileName = "HistoryDoc";
+            d.Class = "US History";
+            d.Unit = "The Beginning";
+            d.Section = "Coming to Shore";
+            d.Type = "Helpful Resources";
+            d.isLink = "false";
+            d.Override = "true";
+            d.Link = "www.thisisnotused.com";
+            d.LinkName = "placeholder";
+            Response r = client.DoPostAsync("save", d).Result;
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            Response s = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+
+            //Now we try to get the file out of the DB.
+            dynamic a = client.DoGetAsync("File/US History/The Beginning/Coming to Shore/HistoryDoc").Result;
+
+            //Delete the file we put in the DB to reduce clutter.
+            Response t = client.DoPostAsync("delete", d).Result;
+            Assert.AreEqual(t.Status, HttpStatusCode.OK);
+
+
+            //This turns the string we got from the DB into a Byte array.
+            char[] charFile = a.File.ToCharArray();
+            byte[] newBytes = new byte[charFile.Length];
+            for(int i = 0; i < charFile.Length; i++)
+            {
+                newBytes[i] = (byte)charFile[i];
+            }
+
+            //This checks to make sure the bytes we got from the DB match the ones we sent up.
+            for (int i = 0; i < charFile.Length; i++)
+            {
+                Assert.AreEqual(newBytes[i], bytes[i]);
+            }
+
+            //Use this commented out section if you want to write the file somewhere.
+            //       string newPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            //        newPath = System.IO.Path.Combine(newPath, "New Members Copy.pdf");
+            //        File.WriteAllBytes(newPath, newBytes);
+            
         }
-        [TestMethod]
-        public void TestMethod2()
-        {
-            //Works with .pptx's
-        }
-        [TestMethod]
-        public void TestMethod2()
-        {
-            //Works with .XL files.
-        }
+/*
+
         //---------------------End of Add File/Link tests------------------------------------
 
         [TestMethod]
@@ -451,7 +613,7 @@ namespace FilerServiceTests
         }
 
         //------------------End of Get last used tags tests----------------------
-        
+     */   
     
     }
 }
