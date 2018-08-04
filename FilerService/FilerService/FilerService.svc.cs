@@ -196,14 +196,27 @@ namespace FilerService
             //Only do this first one if it's a link.
             if (isLink.Equals("true"))
             {
-
+                //Make our query string here. Complete with if statements depending on if inputs are null.
+                string myQueryString = "Select Files.DataID from Files, Classes, Units, Sections where Files.Name = @fileName ";
+                if (myClass != null)
+                {
+                    myQueryString = myQueryString + "AND Classes.Class = @myClass ";
+                }
+                if (unit != null)
+                {
+                    myQueryString = myQueryString + "AND Units.Unit = @unit ";
+                }
+                if (section != null)
+                {
+                    myQueryString = myQueryString + "AND Sections.Section = @section ";
+                }
 
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        using (SqlCommand command = new SqlCommand("Select Links.DataID from Links, Classes, Units, Sections where Links.Name = @linkName AND Classes.Class = @myClass AND Units.Unit = @unit AND Sections.Section = @section", conn, trans))
+                        using (SqlCommand command = new SqlCommand(myQueryString, conn, trans))
                         {
                             command.Parameters.AddWithValue("@myClass", myClass);
                             command.Parameters.AddWithValue("@unit", unit);
@@ -235,7 +248,21 @@ namespace FilerService
             }
 
             //If the item we are adding is not a link...
-            
+            //Make query string here so we can have if statements that say if some values are null.
+            string queryString = "Select Files.DataID from Files, Classes, Units, Sections where Files.Name = @fileName ";
+            if(myClass != null)
+            {
+                queryString = queryString + "AND Classes.Class = @myClass ";
+            }
+            if(unit != null)
+            {
+                queryString = queryString + "AND Units.Unit = @unit ";
+            }
+            if (section != null)
+            {
+                queryString = queryString + "AND Sections.Section = @section ";
+            }
+
 
 
             using (SqlConnection conn = new SqlConnection(FilerDB))
@@ -243,7 +270,7 @@ namespace FilerService
                 conn.Open();
                 using (SqlTransaction trans = conn.BeginTransaction())
                 {
-                    using (SqlCommand command = new SqlCommand("Select Files.DataID from Files, Classes, Units, Sections where Files.Name = @fileName AND Classes.Class = @myClass AND Units.Unit = @unit AND Sections.Section = @section", conn, trans))
+                    using (SqlCommand command = new SqlCommand(queryString, conn, trans))
                     {
                         command.Parameters.AddWithValue("@myClass", myClass);
                         command.Parameters.AddWithValue("@unit", unit);
