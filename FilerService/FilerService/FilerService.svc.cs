@@ -50,7 +50,23 @@ namespace FilerService
             int dataID = 0;
             string isLink = data.isLink;
 
-            if(!CanBeAdded(data)) //Should only be run if override is false and the item exists in DB.
+            if (data == null || isLink == null || data.Override == null)
+            {
+                SetStatus(HttpStatusCode.Forbidden);
+                return;
+            }
+            if(isLink.Equals("true") && (link == null || linkName == null))
+            {
+                SetStatus(HttpStatusCode.Forbidden);
+                return;
+            }
+            if (isLink.Equals("false") && (file == null || fileName == null))
+            {
+                SetStatus(HttpStatusCode.Forbidden);
+                return;
+            }
+
+            if (!CanBeAdded(data)) //Should only be run if override is false and the item exists in DB.
             {
                 SetStatus(HttpStatusCode.Conflict);
                 return;
@@ -58,6 +74,7 @@ namespace FilerService
             //Check to see if data is a link or file.
             if(isLink.Equals("true"))
             {
+                
                 //add the link to the database. Another transaction is used for the tags.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
@@ -82,6 +99,23 @@ namespace FilerService
                     }
                 }
 
+                string queryString = "";
+                if(myClass != null)
+                {
+                    queryString = queryString + "insert into Classes(DataID, Class) values(@dataID, @myClass) ";
+                }
+                if(unit != null)
+                {
+                    queryString = queryString + "insert into Units(DataID, Unit) values(@DataID, @unit) ";
+                }
+                if(section != null)
+                {
+                    queryString = queryString + "insert into Sections(DataID, Section) values(@DataID, @section) ";
+                }
+                if(type != null)
+                {
+                    queryString = queryString + "insert into Types(DataID, Type) values(@DataID, @type) ";
+                }
 
                 //Now add the tag information for the file.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
@@ -89,20 +123,26 @@ namespace FilerService
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        using (SqlCommand command = new SqlCommand("insert into Classes(DataID, Class)" +
-                                            "values(@DataID, @myClass)" +
-                                            "insert into Units(DataID, Unit)" +
-                                            "values(@DataID, @unit)" +
-                                            "insert into Sections(DataID, Section)" +
-                                            "values(@DataID, @section)" +
-                                            "insert into Types(DataID, Type)" +
-                                            "values(@DataID, @type)", conn, trans))
+                        using (SqlCommand command = new SqlCommand(queryString, conn, trans))
                         {
-                            command.Parameters.AddWithValue("@myClass", myClass);
-                            command.Parameters.AddWithValue("@unit", unit);
-                            command.Parameters.AddWithValue("@section", section);
-                            command.Parameters.AddWithValue("@type", type);
                             command.Parameters.AddWithValue("@DataID", dataID);
+                            if (myClass != null)
+                            {
+                                command.Parameters.AddWithValue("@myClass", myClass);
+                            }
+                            if (unit != null)
+                            {
+                                command.Parameters.AddWithValue("@unit", unit);
+                            }
+                            if (section != null)
+                            {
+                               command.Parameters.AddWithValue("@section", section);
+                            }
+                            if (type != null)
+                            {
+                                command.Parameters.AddWithValue("@type", type);
+                            }
+
 
                             command.ExecuteNonQuery();
                             trans.Commit();
@@ -115,6 +155,8 @@ namespace FilerService
 
             else
             {
+                
+
                 //add the file to the database. We will add the file tags in another transaction.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
@@ -139,6 +181,23 @@ namespace FilerService
                     }
                 }
 
+                string queryString = "";
+                if (myClass != null)
+                {
+                    queryString = queryString + "insert into Classes(DataID, Class) values(@dataID, @myClass) ";
+                }
+                if (unit != null)
+                {
+                    queryString = queryString + "insert into Units(DataID, Unit) values(@DataID, @unit) ";
+                }
+                if (section != null)
+                {
+                    queryString = queryString + "insert into Sections(DataID, Section) values(@DataID, @section) ";
+                }
+                if (type != null)
+                {
+                    queryString = queryString + "insert into Types(DataID, Type) values(@DataID, @type) ";
+                }
 
                 //Now add the tag information for the file.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
@@ -146,20 +205,25 @@ namespace FilerService
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        using (SqlCommand command = new SqlCommand("insert into Classes(DataID, Class)" +
-                                            "values(@DataID, @myClass)" +
-                                            "insert into Units(DataID, Unit)" +
-                                            "values(@DataID, @unit)" +
-                                            "insert into Sections(DataID, Section)" +
-                                            "values(@DataID, @section)" +
-                                            "insert into Types(DataID, Type)" +
-                                            "values(@DataID, @type)", conn, trans))
+                        using (SqlCommand command = new SqlCommand(queryString, conn, trans))
                         {
-                            command.Parameters.AddWithValue("@myClass", myClass);
-                            command.Parameters.AddWithValue("@unit", unit);
-                            command.Parameters.AddWithValue("@section", section);
-                            command.Parameters.AddWithValue("@type", type);
                             command.Parameters.AddWithValue("@DataID", dataID);
+                            if (myClass != null)
+                            {
+                                command.Parameters.AddWithValue("@myClass", myClass);
+                            }
+                            if (unit != null)
+                            {
+                                command.Parameters.AddWithValue("@unit", unit);
+                            }
+                            if (section != null)
+                            {
+                                command.Parameters.AddWithValue("@section", section);
+                            }
+                            if (type != null)
+                            {
+                                command.Parameters.AddWithValue("@type", type);
+                            }
 
                             command.ExecuteNonQuery();
                             trans.Commit();
@@ -192,12 +256,14 @@ namespace FilerService
             string isLink = data.isLink;
             bool isMatch = false;
 
+            
+
             //Check DB to see if name, class, unit, and section all match entry in DB. If Override is true we just delete right away. If nothing is deleted it wasn't there to begin with.
             //Only do this first one if it's a link.
             if (isLink.Equals("true"))
             {
                 //Make our query string here. Complete with if statements depending on if inputs are null.
-                string myQueryString = "Select Files.DataID from Files, Classes, Units, Sections where Files.Name = @fileName ";
+                string myQueryString = "Select Links.DataID from Links, Classes, Units, Sections where Links.Name = @linkName ";
                 if (myClass != null)
                 {
                     myQueryString = myQueryString + "AND Classes.Class = @myClass ";
@@ -218,12 +284,20 @@ namespace FilerService
                     {
                         using (SqlCommand command = new SqlCommand(myQueryString, conn, trans))
                         {
-                            command.Parameters.AddWithValue("@myClass", myClass);
-                            command.Parameters.AddWithValue("@unit", unit);
-                            command.Parameters.AddWithValue("@section", section);
-                            command.Parameters.AddWithValue("@type", type);
-                            command.Parameters.AddWithValue("@DataID", dataID);
                             command.Parameters.AddWithValue("@linkName", linkName);
+                            command.Parameters.AddWithValue("@DataID", dataID);
+                            if (myClass != null)
+                            {
+                                command.Parameters.AddWithValue("@myClass", myClass);
+                            }
+                            if (unit != null)
+                            {
+                                command.Parameters.AddWithValue("@unit", unit);
+                            }
+                            if (section != null)
+                            {
+                                command.Parameters.AddWithValue("@section", section);
+                            }
 
                             using (SqlDataReader reader = command.ExecuteReader())
                             {
@@ -248,6 +322,7 @@ namespace FilerService
             }
 
             //If the item we are adding is not a link...
+            
             //Make query string here so we can have if statements that say if some values are null.
             string queryString = "Select Files.DataID from Files, Classes, Units, Sections where Files.Name = @fileName ";
             if(myClass != null)
@@ -272,12 +347,20 @@ namespace FilerService
                 {
                     using (SqlCommand command = new SqlCommand(queryString, conn, trans))
                     {
-                        command.Parameters.AddWithValue("@myClass", myClass);
-                        command.Parameters.AddWithValue("@unit", unit);
-                        command.Parameters.AddWithValue("@section", section);
-                        command.Parameters.AddWithValue("@type", type);
-                        command.Parameters.AddWithValue("@DataID", dataID);
                         command.Parameters.AddWithValue("@fileName", fileName);
+                        command.Parameters.AddWithValue("@DataID", dataID);
+                        if (myClass != null)
+                        {
+                            command.Parameters.AddWithValue("@myClass", myClass);
+                        }
+                        if (unit != null)
+                        {
+                            command.Parameters.AddWithValue("@unit", unit);
+                        }
+                        if (section != null)
+                        {
+                            command.Parameters.AddWithValue("@section", section);
+                        }
 
                         using (SqlDataReader reader = command.ExecuteReader())
                         {
@@ -335,23 +418,55 @@ namespace FilerService
             int dataID = 0;
             string isLink = data.isLink;
 
+            if(isLink == null || (linkName == null && fileName == null))
+            {
+                SetStatus(HttpStatusCode.Forbidden);
+                return;
+            }
+
             //This part is if what we are deleting is a link.
             if (isLink.Equals("true"))
             {
+                string queryString = "Select Links.DataID from Links, Classes, Units, Sections where Links.Name = @linkName ";
+                if (myClass != null)
+                {
+                    queryString = queryString + "AND Classes.Class = @myClass ";
+                }
+                if (unit != null)
+                {
+                    queryString = queryString + "AND Units.Unit = @unit ";
+                }
+                if (section != null)
+                {
+                    queryString = queryString + "AND Sections.Section = @section ";
+                }
+                
                 //First we need to find the DataID of the information that we want to remove.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        using (SqlCommand command = new SqlCommand("Select Links.DataID from Links, Classes, Units, Sections where Links.Name = @linkName AND Classes.Class = @myClass AND Units.Unit = @unit AND Sections.Section = @section", conn, trans))
+                        using (SqlCommand command = new SqlCommand(queryString, conn, trans))
                         {
-                            command.Parameters.AddWithValue("@myClass", myClass);
-                            command.Parameters.AddWithValue("@unit", unit);
-                            command.Parameters.AddWithValue("@section", section);
-                            command.Parameters.AddWithValue("@type", type);
-                            command.Parameters.AddWithValue("@DataID", dataID);
                             command.Parameters.AddWithValue("@linkName", linkName);
+                            command.Parameters.AddWithValue("@DataID", dataID);
+                            if (myClass != null)
+                            {
+                                command.Parameters.AddWithValue("@myClass", myClass);
+                            }
+                            if (unit != null)
+                            {
+                                command.Parameters.AddWithValue("@unit", unit);
+                            }
+                            if (section != null)
+                            {
+                                command.Parameters.AddWithValue("@section", section);
+                            }
+                            if (type != null)
+                            {
+                                command.Parameters.AddWithValue("@type", type);
+                            }
 
                             using (SqlDataReader reader = command.ExecuteReader())
                             {
@@ -369,17 +484,33 @@ namespace FilerService
                         }
                     }
                 }
+
+                queryString = "";
+                //If statements here
+                if (myClass != null)
+                {
+                    queryString = queryString + "Delete from Classes where DataID = @DataID ";
+                }
+                if (unit != null)
+                {
+                    queryString = queryString + "Delete from Units where DataID = @DataID ";
+                }
+                if (section != null)
+                {
+                    queryString = queryString + "Delete from Sections where DataID = @DataID ";
+                }
+                if (type != null)
+                {
+                    queryString = queryString + "Delete from Types where DataID = @DataID ";
+                }
+                queryString += "Delete from Links where DataID = @DataID";
                 //Now we want to use the DataID we found to actually delete the information.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        using (SqlCommand command = new SqlCommand("Delete from Sections where DataID = @DataID " +
-                                                                    "Delete from Units where DataID = @DataID " +
-                                                                    "Delete from Classes where DataID = @DataID " +
-                                                                    "Delete from Types where DataID = @DataID " +
-                                                                    "Delete from Links where DataID = @DataID", conn, trans))
+                        using (SqlCommand command = new SqlCommand(queryString, conn, trans))
                         {
                             command.Parameters.AddWithValue("@DataID", dataID);
 
@@ -404,20 +535,45 @@ namespace FilerService
             }
             else //If the piece of data is a file.
             {
+                string queryString = "Select Files.DataID from Files, Classes, Units, Sections where Files.Name = @FileName ";
+                if (myClass != null)
+                {
+                    queryString = queryString + "AND Classes.Class = @myClass ";
+                }
+                if (unit != null)
+                {
+                    queryString = queryString + "AND Units.Unit = @unit ";
+                }
+                if (section != null)
+                {
+                    queryString = queryString + "AND Sections.Section = @section ";
+                }
                 //First we need to find the DataID of the information that we want to remove.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        using (SqlCommand command = new SqlCommand("Select Files.DataID from Files, Classes, Units, Sections where Files.Name = @FileName AND Classes.Class = @myClass AND Units.Unit = @unit AND Sections.Section = @section", conn, trans))
+                        using (SqlCommand command = new SqlCommand(queryString, conn, trans))
                         {
-                            command.Parameters.AddWithValue("@myClass", myClass);
-                            command.Parameters.AddWithValue("@unit", unit);
-                            command.Parameters.AddWithValue("@section", section);
-                            command.Parameters.AddWithValue("@type", type);
-                            command.Parameters.AddWithValue("@DataID", dataID);
                             command.Parameters.AddWithValue("@FileName", fileName);
+                            command.Parameters.AddWithValue("@DataID", dataID);
+                            if (myClass != null)
+                            {
+                                command.Parameters.AddWithValue("@myClass", myClass);
+                            }
+                            if (unit != null)
+                            {
+                                command.Parameters.AddWithValue("@unit", unit);
+                            }
+                            if (section != null)
+                            {
+                                command.Parameters.AddWithValue("@section", section);
+                            }
+                            if (type != null)
+                            {
+                                command.Parameters.AddWithValue("@type", type);
+                            }
 
                             using (SqlDataReader reader = command.ExecuteReader())
                             {
@@ -436,17 +592,33 @@ namespace FilerService
                         }
                     }
                 }
+
+                queryString = "";
+                //If statements here
+                if (myClass != null)
+                {
+                    queryString = queryString + "Delete from Classes where DataID = @DataID ";
+                }
+                if (unit != null)
+                {
+                    queryString = queryString + "Delete from Units where DataID = @DataID ";
+                }
+                if (section != null)
+                {
+                    queryString = queryString + "Delete from Sections where DataID = @DataID ";
+                }
+                if (type != null)
+                {
+                    queryString = queryString + "Delete from Types where DataID = @DataID ";
+                }
+                queryString += "Delete from Files where DataID = @DataID";
                 //Now we want to use the DataID we found to actually delete the information.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        using (SqlCommand command = new SqlCommand("Delete from Sections where DataID = @DataID " +
-                                                                    "Delete from Units where DataID = @DataID " +
-                                                                    "Delete from Classes where DataID = @DataID " +
-                                                                    "Delete from Types where DataID = @DataID " +
-                                                                    "Delete from Files where DataID = @DataID", conn, trans))
+                        using (SqlCommand command = new SqlCommand(queryString, conn, trans))
                         {
                             command.Parameters.AddWithValue("@DataID", dataID);
 

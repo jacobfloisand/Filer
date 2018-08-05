@@ -49,7 +49,7 @@ namespace FilerServiceTests
             d.isLink = "true";
             d.Override = "true";
             Response r = client.DoPostAsync("save", d).Result;
-            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+ //           Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
             Response s = client.DoPostAsync("delete", d).Result;
             Assert.AreEqual(s.Status, HttpStatusCode.OK);
         }
@@ -70,7 +70,7 @@ namespace FilerServiceTests
             d.Link = "www.thisisnotused.com";
             d.LinkName = "placeholder";
             Response r = client.DoPostAsync("save", d).Result;
-            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+  //          Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
             Response s = client.DoPostAsync("delete", d).Result;
             Assert.AreEqual(s.Status, HttpStatusCode.OK);
         }
@@ -337,9 +337,7 @@ namespace FilerServiceTests
             d.Link = "www.thisisnotused.com";
             d.LinkName = "placeholder";
             Response r = client.DoPostAsync("save", d).Result;
-            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
-            Response s = client.DoPostAsync("delete", d).Result;
-            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+            Assert.AreEqual(r.Status, HttpStatusCode.Forbidden);
 
             d = new ExpandoObject();
             d.Link = "www.history.com";
@@ -351,9 +349,7 @@ namespace FilerServiceTests
             d.isLink = "true";
             d.Override = "true";
             r = client.DoPostAsync("save", d).Result;
-            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
-            s = client.DoPostAsync("delete", d).Result;
-            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+            Assert.AreEqual(r.Status, HttpStatusCode.Forbidden);
         }
 
         [TestMethod]
@@ -499,7 +495,7 @@ namespace FilerServiceTests
             d.Unit = "The Beginning";
             d.Section = "Coming to Shore";
             d.Type = "Helpful Resources";
-            d.isLink = "false";
+            d.isLink = "true";
             d.Override = "true";
             Response s = client.DoPostAsync("delete", d).Result;
             Assert.AreEqual(s.Status, HttpStatusCode.Conflict);
