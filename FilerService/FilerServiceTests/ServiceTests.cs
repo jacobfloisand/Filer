@@ -70,7 +70,7 @@ namespace FilerServiceTests
             d.Link = "www.thisisnotused.com";
             d.LinkName = "placeholder";
             Response r = client.DoPostAsync("save", d).Result;
-  //          Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
+            Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
             Response s = client.DoPostAsync("delete", d).Result;
             Assert.AreEqual(s.Status, HttpStatusCode.OK);
         }

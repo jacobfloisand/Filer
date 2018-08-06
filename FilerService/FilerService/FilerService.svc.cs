@@ -302,6 +302,22 @@ namespace FilerService
                             using (SqlDataReader reader = command.ExecuteReader())
                             {
                                 isMatch = reader.Read();
+                                if (isMatch)
+                                {
+                                    isMatch = false; //We know there's something that looks like a match. If it's an exact match we'll change this back to true.
+                                    HashSet<int> set = new HashSet<int>();
+                                    for (int i = 0; i < reader.FieldCount; i++)
+                                    {
+                                        set.Add(reader.GetInt32(i));
+                                    }
+                                    foreach (int num in set)
+                                    {
+                                        if (isExactMatch(data, num))
+                                        {
+                                            isMatch = true;
+                                        }
+                                    }
+                                }
                             }
                             trans.Commit();
                         }
@@ -365,6 +381,22 @@ namespace FilerService
                         using (SqlDataReader reader = command.ExecuteReader())
                         {
                             isMatch = reader.Read();
+                            if(isMatch)
+                            {
+                                isMatch = false; //We know there's something that looks like a match. If it's an exact match we'll change this back to true.
+                                HashSet<int> set = new HashSet<int>();
+                                for(int i = 0; i < reader.FieldCount; i++)
+                                {
+                                    set.Add(reader.GetInt32(i));
+                                }
+                                foreach(int num in set)
+                                {
+                                    if(isExactMatch(data, num))
+                                    {
+                                        isMatch = true;
+                                    }
+                                }
+                            }
                         }
                         trans.Commit();
                     }
@@ -383,6 +415,64 @@ namespace FilerService
                 return false;
             }
            
+        }
+
+        /// <summary>
+        /// Returns true iff the DB does not have a tag recorded at the highest level that data has a null entry.
+        /// For example, if data.Class is null, then this method returns true if there is not class for the specified dataID in DB.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="dataID"></param>
+        /// <returns></returns>
+        private bool isExactMatch(ResourceData data, int dataID)
+        {
+            bool classIsNull = data.Class == null ? true:false ;
+            bool unitIsNull = data.Unit == null ? true:false ;
+            bool sectionIsNull = data.Section == null ? true:false;
+            string sqlString = "";
+            bool isNotMatch = false;
+            if(classIsNull)
+            {
+                sqlString = "Select Classes.DataID from Classes where DataID = @DataID";
+            }
+            else if(unitIsNull)
+            {
+                sqlString = "Select Units.DataID from Units where DataID = @DataID";
+            }
+            else if(sectionIsNull)
+            {
+                sqlString = "Select Sections.DataID from Sections where DataID = @DataID";
+            }
+            else
+            {
+                return true; //This indicates that the original search contained all data values, so the match it found is an exact match.
+            }
+
+            //Now we just need to do a search using the sqlString. If it finds something, that is not the exact match. Otherwise it is is.
+            using (SqlConnection conn = new SqlConnection(FilerDB))
+            {
+                conn.Open();
+                using (SqlTransaction trans = conn.BeginTransaction())
+                {
+                    using (SqlCommand command = new SqlCommand(sqlString, conn, trans))
+                    {
+                        command.Parameters.AddWithValue("@DataID", dataID);
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            isNotMatch = reader.Read(); //If it finds something then this is not a match. It's not supposed to find something.
+                        }
+                        trans.Commit();
+                    }
+                }
+                if (isNotMatch)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
         }
 
         /// <summary>
@@ -427,20 +517,26 @@ namespace FilerService
             //This part is if what we are deleting is a link.
             if (isLink.Equals("true"))
             {
-                string queryString = "Select Links.DataID from Links, Classes, Units, Sections where Links.Name = @linkName ";
+                string preQueryString = "Select Links.DataID from Links";
+
+                string queryString = "where Links.Name = @LinkName ";
                 if (myClass != null)
                 {
+                    preQueryString += ", Classes";
                     queryString = queryString + "AND Classes.Class = @myClass ";
                 }
                 if (unit != null)
                 {
+                    preQueryString += ", Units";
                     queryString = queryString + "AND Units.Unit = @unit ";
                 }
                 if (section != null)
                 {
+                    preQueryString += ", Sections";
                     queryString = queryString + "AND Sections.Section = @section ";
                 }
-                
+                queryString = preQueryString + " " + queryString;
+
                 //First we need to find the DataID of the information that we want to remove.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
@@ -535,19 +631,24 @@ namespace FilerService
             }
             else //If the piece of data is a file.
             {
-                string queryString = "Select Files.DataID from Files, Classes, Units, Sections where Files.Name = @FileName ";
+                string preQueryString = "Select Files.DataID from Files";
+                string queryString = "where Files.Name = @FileName ";
                 if (myClass != null)
                 {
+                    preQueryString += ", Classes";
                     queryString = queryString + "AND Classes.Class = @myClass ";
                 }
                 if (unit != null)
                 {
+                    preQueryString += ", Units";
                     queryString = queryString + "AND Units.Unit = @unit ";
                 }
                 if (section != null)
                 {
+                    preQueryString += ", Sections";
                     queryString = queryString + "AND Sections.Section = @section ";
                 }
+                queryString = preQueryString + " " + queryString;
                 //First we need to find the DataID of the information that we want to remove.
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
@@ -583,7 +684,7 @@ namespace FilerService
                                 }
                                 else
                                 {
-                                    SetStatus(HttpStatusCode.Conflict);
+                                    SetStatus(HttpStatusCode.Conflict); //Make sure that sections is not included if it is null. Otherwise this gets run.
                                     return;
                                 }
 
