@@ -152,7 +152,7 @@ namespace FilerServiceTests
             Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
 
             Response s = client.DoPostAsync("save", d).Result;
-            Assert.AreEqual(s.Status, HttpStatusCode.Accepted);
+            Assert.AreEqual(s.Status, HttpStatusCode.Conflict);
 
             Response t = client.DoPostAsync("delete", d).Result;
             Assert.AreEqual(t.Status, HttpStatusCode.OK);
@@ -421,7 +421,7 @@ namespace FilerServiceTests
         [TestMethod]
         public void TestMethod16()
         {
-            //Make sure file is actually deleted.
+            //Make sure file is actually deleted. Requires DoSearch
             dynamic d = new ExpandoObject();
             d.File = "This is the history of the united states beginning with its founding fathers...";
             d.Date = "7/3/2018";

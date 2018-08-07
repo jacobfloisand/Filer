@@ -306,9 +306,10 @@ namespace FilerService
                                 {
                                     isMatch = false; //We know there's something that looks like a match. If it's an exact match we'll change this back to true.
                                     HashSet<int> set = new HashSet<int>();
-                                    for (int i = 0; i < reader.FieldCount; i++)
+                                    set.Add(reader.GetInt32(0));
+                                    while (reader.Read())
                                     {
-                                        set.Add(reader.GetInt32(i));
+                                        set.Add(reader.GetInt32(0));
                                     }
                                     foreach (int num in set)
                                     {
@@ -385,9 +386,10 @@ namespace FilerService
                             {
                                 isMatch = false; //We know there's something that looks like a match. If it's an exact match we'll change this back to true.
                                 HashSet<int> set = new HashSet<int>();
-                                for(int i = 0; i < reader.FieldCount; i++)
+                                set.Add(reader.GetInt32(0));
+                                while(reader.Read())
                                 {
-                                    set.Add(reader.GetInt32(i));
+                                    set.Add(reader.GetInt32(0));
                                 }
                                 foreach(int num in set)
                                 {
@@ -566,11 +568,26 @@ namespace FilerService
 
                             using (SqlDataReader reader = command.ExecuteReader())
                             {
-                                if (reader.Read())
+                                bool isMatch = reader.Read();
+                                if (isMatch)
                                 {
-                                    dataID = reader.GetInt32(0);
+                                    isMatch = false; //We know there's something that looks like a match. If it's an exact match we'll change this back to true.
+                                    HashSet<int> set = new HashSet<int>();
+                                    set.Add(reader.GetInt32(0));
+                                    while (reader.Read())
+                                    {
+                                        set.Add(reader.GetInt32(0));
+                                    }
+                                    foreach (int num in set)
+                                    {
+                                        if (isExactMatch(data, num))
+                                        {
+                                            dataID = num;
+                                            isMatch = true;
+                                        }
+                                    }
                                 }
-                                else
+                                if (!isMatch)
                                 {
                                     SetStatus(HttpStatusCode.Conflict);
                                     return;
@@ -678,13 +695,28 @@ namespace FilerService
 
                             using (SqlDataReader reader = command.ExecuteReader())
                             {
-                                if(reader.Read())
+                                bool isMatch = reader.Read();
+                                if (isMatch)
                                 {
-                                    dataID = reader.GetInt32(0);
+                                    isMatch = false; //We know there's something that looks like a match. If it's an exact match we'll change this back to true.
+                                    HashSet<int> set = new HashSet<int>();
+                                    set.Add(reader.GetInt32(0));
+                                    while(reader.Read())
+                                    {
+                                        set.Add(reader.GetInt32(0));
+                                    }
+                                    foreach (int num in set)
+                                    {
+                                         if (isExactMatch(data, num))
+                                        {
+                                            dataID = num;
+                                            isMatch = true;
+                                        }
+                                    }
                                 }
-                                else
+                                if(!isMatch)
                                 {
-                                    SetStatus(HttpStatusCode.Conflict); //Make sure that sections is not included if it is null. Otherwise this gets run.
+                                    SetStatus(HttpStatusCode.Conflict);
                                     return;
                                 }
 
@@ -757,9 +789,289 @@ namespace FilerService
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public SearchData DoSearch(string Class, string Unit, string Section, string Name, string Date, string Type)
+        public ResourceData[] DoSearch(string Class, string Unit, string Section, string Name, string Date, string Type)
         {
-            throw new NotImplementedException();
+            ResourceData[] files; //We will declare the size of it once we know...
+            ResourceData[] links;
+            ResourceData[] searchResults;
+            HashSet<int> fileDataIDSet = new HashSet<int>();
+            HashSet<int> linkDataIDSet = new HashSet<int>();
+            //Here we check for files in DB that match. Afterwards will check for links.
+            //Select All dataID's that  correlate with matching data.
+            string preQueryString = "Select Files.DataID from Files";
+            string queryString = "where Files.Name = @FileName ";
+            if (Class != null)
+            {
+                preQueryString += ", Classes";
+                queryString = queryString + "AND Classes.Class = @Class ";
+            }
+            if (Unit != null)
+            {
+                preQueryString += ", Units";
+                queryString = queryString + "AND Units.Unit = @Unit ";
+            }
+            if (Section != null)
+            {
+                preQueryString += ", Sections";
+                queryString = queryString + "AND Sections.Section = @Section ";
+            }
+
+            if (Name != null)
+            {
+                queryString = queryString + "AND Files.Name = @Name ";
+            }
+            if (Date != null)
+            {
+                queryString = queryString + "AND Files.Date = @Date ";
+            }
+            if (Type != null)
+            {
+                preQueryString += ", Type";
+                queryString = queryString + "AND Type.Type = @Type ";
+            }
+            queryString = preQueryString + " " + queryString;
+            //First we need to find the DataID of the information that we want to return.
+            using (SqlConnection conn = new SqlConnection(FilerDB))
+            {
+                conn.Open();
+                using (SqlTransaction trans = conn.BeginTransaction())
+                {
+                    using (SqlCommand command = new SqlCommand(queryString, conn, trans))
+                    {
+                        if (Class != null)
+                        {
+                            command.Parameters.AddWithValue("@Class", Class);
+                        }
+                        if (Unit != null)
+                        {
+                            command.Parameters.AddWithValue("@Unit", Unit);
+                        }
+                        if (Section != null)
+                        {
+                            command.Parameters.AddWithValue("@Section", Section);
+                        }
+                        if (Type != null)
+                        {
+                            command.Parameters.AddWithValue("@Type", Type);
+                        }
+                        if (Date != null)
+                        {
+                            command.Parameters.AddWithValue("@Date", Date);
+                        }
+                        if (Name != null)
+                        {
+                            command.Parameters.AddWithValue("@Name", Name);
+                        }
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            
+                            while (reader.Read())
+                            {
+                                fileDataIDSet.Add(reader.GetInt32(0));
+                            }
+
+                        }
+                        trans.Commit();
+                    }
+                }
+            }
+            files = new ResourceData[fileDataIDSet.Count];
+            //Get the file info from DB one dataID at a time, being sure to add it to the ResourceData array of files.
+            int i = 0; //Counts number of loops.
+            foreach(int num in fileDataIDSet)
+            {
+                //For each piece of data we need to get: Name, Date, Class, Unit, Section, Type.
+                string sqlString = "Select Files.Name from Files where Files.DataID = @num " +
+                                    "Select Files.Date from Files where Files.DataID = @num " +
+                                    "Select Classes.Class from Classes where Classes.DataID = @num " +
+                                    "Select Units.Unit from Units where Units.DataID = @num " +
+                                    "Select Sections.Section from Sections where Sections.DataID = @num " +
+                                    "Select Types.Type from Types where Types.DataID = @num";
+                using (SqlConnection conn = new SqlConnection(FilerDB))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        using (SqlCommand command = new SqlCommand(sqlString, conn, trans))
+                        {
+                            command.Parameters.AddWithValue("@num", num);
+                            using (SqlDataReader reader = command.ExecuteReader())
+                            {
+                                ResourceData temp = new ResourceData();
+                                reader.Read();
+                                temp.FileName = reader.GetString(0);
+                                reader.Read();
+                                temp.Date = reader.GetString(0);
+                                reader.Read();
+                                if(reader.FieldCount != 0)
+                                {
+                                    temp.Class = reader.GetString(0);
+                                }
+                                reader.Read();
+                                if (reader.FieldCount != 0)
+                                {
+                                    temp.Unit = reader.GetString(0);
+                                }
+                                reader.Read();
+                                if (reader.FieldCount != 0)
+                                {
+                                    temp.Section = reader.GetString(0);
+                                }
+                                reader.Read();
+                                if (reader.FieldCount != 0)
+                                {
+                                    temp.Type = reader.GetString(0);
+                                }
+                                temp.isLink = "false";
+                                files[i++] = temp;
+                            }
+                            trans.Commit();
+                        }
+                    }
+                }
+            }
+
+            //Then get links that match input data.
+            preQueryString = "Select Links.DataID from Links";
+            queryString = "where Links.Name = @LinkName ";
+            if (Class != null)
+            {
+                preQueryString += ", Classes";
+                queryString = queryString + "AND Classes.Class = @Class ";
+            }
+            if (Unit != null)
+            {
+                preQueryString += ", Units";
+                queryString = queryString + "AND Units.Unit = @Unit ";
+            }
+            if (Section != null)
+            {
+                preQueryString += ", Sections";
+                queryString = queryString + "AND Sections.Section = @Section ";
+            }
+
+            if (Name != null)
+            {
+                queryString = queryString + "AND Links.Name = @Name ";
+            }
+            if (Date != null)
+            {
+                queryString = queryString + "AND Links.Date = @Date ";
+            }
+            if (Type != null)
+            {
+                preQueryString += ", Type";
+                queryString = queryString + "AND Type.Type = @Type ";
+            }
+            queryString = preQueryString + " " + queryString;
+            //First we need to find the DataID of the information that we want to return.
+            using (SqlConnection conn = new SqlConnection(FilerDB))
+            {
+                conn.Open();
+                using (SqlTransaction trans = conn.BeginTransaction())
+                {
+                    using (SqlCommand command = new SqlCommand(queryString, conn, trans))
+                    {
+                        if (Class != null)
+                        {
+                            command.Parameters.AddWithValue("@Class", Class);
+                        }
+                        if (Unit != null)
+                        {
+                            command.Parameters.AddWithValue("@Unit", Unit);
+                        }
+                        if (Section != null)
+                        {
+                            command.Parameters.AddWithValue("@Section", Section);
+                        }
+                        if (Type != null)
+                        {
+                            command.Parameters.AddWithValue("@Type", Type);
+                        }
+                        if (Date != null)
+                        {
+                            command.Parameters.AddWithValue("@Date", Date);
+                        }
+                        if (Name != null)
+                        {
+                            command.Parameters.AddWithValue("@Name", Name);
+                        }
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+
+                            while (reader.Read())
+                            {
+                                linkDataIDSet.Add(reader.GetInt32(0));
+                            }
+
+                        }
+                        trans.Commit();
+                    }
+                }
+            }
+            links = new ResourceData[linkDataIDSet.Count];
+            //Get the link info from DB one dataID at a time, being sure to add it to the ResourceData array of links.
+            int j = 0; //Counts number of loops.
+            foreach (int num in linkDataIDSet)
+            {
+                //For each piece of data we need to get: Name, Date, Class, Unit, Section, Type.
+                string sqlString = "Select Links.Name from Links where Links.DataID = @num " +
+                                    "Select Links.Date from Links where Links.DataID = @num " +
+                                    "Select Classes.Class from Classes where Classes.DataID = @num " +
+                                    "Select Units.Unit from Units where Units.DataID = @num " +
+                                    "Select Sections.Section from Sections where Sections.DataID = @num " +
+                                    "Select Types.Type from Types where Types.DataID = @num " +
+                                    "Select Links.Link from Links where Links.DataID = @num";
+                using (SqlConnection conn = new SqlConnection(FilerDB))
+                {
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        using (SqlCommand command = new SqlCommand(sqlString, conn, trans))
+                        {
+                            command.Parameters.AddWithValue("@num", num);
+                            using (SqlDataReader reader = command.ExecuteReader())
+                            {
+                                ResourceData temp = new ResourceData();
+                                reader.Read();
+                                temp.FileName = reader.GetString(0);
+                                reader.Read();
+                                temp.Date = reader.GetString(0);
+                                reader.Read();
+                                if (reader.FieldCount != 0)
+                                {
+                                    temp.Class = reader.GetString(0);
+                                }
+                                reader.Read();
+                                if (reader.FieldCount != 0)
+                                {
+                                    temp.Unit = reader.GetString(0);
+                                }
+                                reader.Read();
+                                if (reader.FieldCount != 0)
+                                {
+                                    temp.Section = reader.GetString(0);
+                                }
+                                reader.Read();
+                                if (reader.FieldCount != 0)
+                                {
+                                    temp.Type = reader.GetString(0);
+                                }
+                                reader.Read();
+                                temp.Link = reader.GetString(0);
+                                temp.isLink = "true";
+                                links[j++] = temp;
+                            }
+                            trans.Commit();
+                        }
+                    }
+                }
+            }
+            //combine the files and links ResourceData arrays into one mega array to be returned.
+            searchResults = new ResourceData[files.Length + links.Length];
+            files.CopyTo(searchResults, 0);
+            links.CopyTo(searchResults, files.Length);
+            return searchResults;
         }
 
         /// <summary>
@@ -798,7 +1110,7 @@ namespace FilerService
         /// Gets the information for the last 5 items that were filed. No input.
         /// </summary>
         /// <returns></returns>
-        public SearchData GetRecentlyFiled()
+        public ResourceData[] GetRecentlyFiled()
         {
             throw new NotImplementedException();
         }
