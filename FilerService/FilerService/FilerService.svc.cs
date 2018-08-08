@@ -327,7 +327,7 @@ namespace FilerService
                     {
                         return true;
                     }
-                    if (data.Override.Equals(true)) //If we found a match and override is true...
+                    if (data.Override.Equals("true")) //If we found a match and override is true...
                     {
                         //Delete the item we found.
                         Delete(data);
@@ -629,21 +629,22 @@ namespace FilerService
 
                             using (SqlDataReader reader = command.ExecuteReader())
                             {
-                                reader.Read();
-                                int numDeleted = reader.RecordsAffected; //This is where we need to check if something was deleted or not. 1 = deleted. 0 = not deleted.
-                                if (numDeleted == 1)
-                                {
-                                    SetStatus(HttpStatusCode.OK);
-                                }
-                                if (numDeleted == 0)
-                                {
-                                    SetStatus(HttpStatusCode.Conflict);
-                                }
+                                //reader.Read();
+                                //int numDeleted = reader.RecordsAffected; //This is where we need to check if something was deleted or not. 1 = deleted. 0 = not deleted.
+                                //if (numDeleted == 1)
+                                //{
+                                //    SetStatus(HttpStatusCode.OK);
+                                //}
+                                //if (numDeleted == 0)
+                                //{
+                                //    SetStatus(HttpStatusCode.Conflict);
+                                //}
                             }
                             trans.Commit();
                         }
                     }
                 }
+                SetStatus(HttpStatusCode.OK);
                 return;
             }
             else //If the piece of data is a file.
@@ -757,21 +758,22 @@ namespace FilerService
 
                             using (SqlDataReader reader = command.ExecuteReader())
                             {
-                                reader.Read();
-                                int numDeleted = reader.RecordsAffected; //This is where we need to check if something was deleted or not. 1 = deleted. 0 = not deleted.
-                                if (numDeleted == 1)
-                                {
-                                    SetStatus(HttpStatusCode.OK);
-                                }
-                                if (numDeleted == 0)
-                                {
-                                    SetStatus(HttpStatusCode.Conflict);
-                                }
+                                //reader.Read();
+                                //int numDeleted = reader.RecordsAffected; //This is where we need to check if something was deleted or not. 1 = deleted. 0 = not deleted.
+                                //if (numDeleted == 1)
+                                //{
+                                //    SetStatus(HttpStatusCode.OK);
+                                //}
+                                //if (numDeleted == 0)
+                                //{
+                                //    SetStatus(HttpStatusCode.Conflict);
+                                //}
                             }
                             trans.Commit();
                         }
                     }
                 }
+                SetStatus(HttpStatusCode.OK);
                 return;
             }
 
@@ -800,7 +802,8 @@ namespace FilerService
             //Here we check for files in DB that match. Afterwards will check for links.
             //Select All dataID's that  correlate with matching data.
             string preQueryString = "Select Files.DataID from Files";
-            string queryString = "where Files.Name = @Name ";
+            string queryString = "where Files.Name = Files.Name ";
+
             if (Class != null)
             {
                 preQueryString += ", Classes";
@@ -883,11 +886,21 @@ namespace FilerService
             {
                 ResourceData temp = new ResourceData();
                 //For each piece of data we need to get: Name, Date, Class, Unit, Section, Type. Date is NOT included here.
-                string sqlString = "Select Files.Name from Files where Files.DataID = @num Union " +
-                                    "Select Classes.Class from Classes where Classes.DataID = @num Union " +
-                                    "Select Units.Unit from Units where Units.DataID = @num Union " +
-                                    "Select Sections.Section from Sections where Sections.DataID = @num Union " +
-                                    "Select Types.Type from Types where Types.DataID = @num";
+                string sqlString = "SELECT COLUMN_NAME, Files.Name " +
+                                    "FROM INFORMATION_SCHEMA.COLUMNS, Files " +
+                                    "WHERE COLUMN_NAME = N'Name' AND Files.DataID = @num Union " +
+                                    "SELECT COLUMN_NAME, Classes.Class " +
+                                    "FROM INFORMATION_SCHEMA.COLUMNS, Classes " +
+                                    "WHERE COLUMN_NAME = N'Class' AND Classes.DataID = @num Union " +
+                                    "SELECT COLUMN_NAME, Units.Unit " +
+                                    "FROM INFORMATION_SCHEMA.COLUMNS, Units " +
+                                    "WHERE COLUMN_NAME = N'Unit' AND Units.DataID = @num Union " +
+                                    "SELECT COLUMN_NAME, Sections.Section " +
+                                    "FROM INFORMATION_SCHEMA.COLUMNS, Sections " +
+                                    "WHERE COLUMN_NAME = N'Section' AND Sections.DataID = @num Union " +
+                                    "SELECT COLUMN_NAME, Types.Type " +
+                                    "FROM INFORMATION_SCHEMA.COLUMNS, Types " +
+                                    "WHERE COLUMN_NAME = N'Type' AND Types.DataID = @num";
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
@@ -900,26 +913,27 @@ namespace FilerService
                             {
                                 while (reader.Read())
                                 {
-                                    string currentCol = reader.GetName(0);
+                                    string currentCol = reader.GetString(0);
+                                    string currentVal = reader.GetString(1);
                                     if (currentCol.Equals("Name"))
                                     {
-                                        temp.LinkName = reader.GetString(0);
+                                        temp.FileName = currentVal;
                                     }
                                     if (currentCol.Equals("Class"))
                                     {
-                                        temp.Class = reader.GetString(0);
+                                        temp.Class = currentVal;
                                     }
                                     if (currentCol.Equals("Unit"))
                                     {
-                                        temp.Unit = reader.GetString(0);
+                                        temp.Unit = currentVal;
                                     }
                                     if (currentCol.Equals("Section"))
                                     {
-                                        temp.Section = reader.GetString(0);
+                                        temp.Section = currentVal;
                                     }
                                     if (currentCol.Equals("Type"))
                                     {
-                                        temp.Type = reader.GetString(0);
+                                        temp.Type = currentVal;
                                     }
                                 }
                                 temp.isLink = "false";
@@ -952,7 +966,7 @@ namespace FilerService
 
             //Then get links that match input data. (This is part 2/2 of DoSearch. The files were first. Now we check for links.)
             preQueryString = "Select Links.DataID from Links";
-            queryString = "where Links.Name = @Name ";
+            queryString = "where Links.Name = Links.Name ";
             if (Class != null)
             {
                 preQueryString += ", Classes";
@@ -1035,12 +1049,24 @@ namespace FilerService
             {
                 ResourceData temp = new ResourceData();
                 //For each piece of data we need to get: Name, Date, Class, Unit, Section, Type. Date is NOT included here.
-                string sqlString = "Select Links.Name from Links where Links.DataID = @num Union " +
-                                    "Select Classes.Class from Classes where Classes.DataID = @num Union " +
-                                    "Select Units.Unit from Units where Units.DataID = @num Union " +
-                                    "Select Sections.Section from Sections where Sections.DataID = @num Union " +
-                                    "Select Types.Type from Types where Types.DataID = @num Union " +
-                                    "Select Links.Link from Links where Links.DataID = @num";
+                string sqlString = "SELECT COLUMN_NAME, Links.Name " +
+                                    "FROM INFORMATION_SCHEMA.COLUMNS, Links " +
+                                    "WHERE COLUMN_NAME = N'Name' AND Links.DataID = @num Union " +
+                                    "SELECT COLUMN_NAME, Classes.Class " +
+                                    "FROM INFORMATION_SCHEMA.COLUMNS, Classes " +
+                                    "WHERE COLUMN_NAME = N'Class' AND Classes.DataID = @num Union " +
+                                    "SELECT COLUMN_NAME, Units.Unit " +
+                                    "FROM INFORMATION_SCHEMA.COLUMNS, Units " +
+                                    "WHERE COLUMN_NAME = N'Unit' AND Units.DataID = @num Union " +
+                                    "SELECT COLUMN_NAME, Sections.Section " +
+                                    "FROM INFORMATION_SCHEMA.COLUMNS, Sections " +
+                                    "WHERE COLUMN_NAME = N'Section' AND Sections.DataID = @num Union " +
+                                    "SELECT COLUMN_NAME, Types.Type " +
+                                    "FROM INFORMATION_SCHEMA.COLUMNS, Types " +
+                                    "WHERE COLUMN_NAME = N'Type' AND Types.DataID = @num Union " +
+                                    "SELECT COLUMN_NAME, Links.Link " +
+                                    "FROM INFORMATION_SCHEMA.COLUMNS, Links " +
+                                    "WHERE COLUMN_NAME = N'Link' AND Links.DataID = @num";
                 using (SqlConnection conn = new SqlConnection(FilerDB))
                 {
                     conn.Open();
@@ -1053,30 +1079,31 @@ namespace FilerService
                             {
                                 while (reader.Read())
                                 {
-                                    string currentCol = reader.GetName(0);
+                                    string currentCol = reader.GetString(0);
+                                    string currentVal = reader.GetString(1);
                                     if (currentCol.Equals("Name"))
                                     {
-                                        temp.LinkName = reader.GetString(0);
+                                        temp.LinkName = currentVal;
                                     }
                                     if (currentCol.Equals("Class"))
                                     {
-                                        temp.Class = reader.GetString(0);
+                                        temp.Class = currentVal;
                                     }
                                     if (currentCol.Equals("Unit"))
                                     {
-                                        temp.Unit = reader.GetString(0);
+                                        temp.Unit = currentVal;
                                     }
                                     if (currentCol.Equals("Section"))
                                     {
-                                        temp.Section = reader.GetString(0);
+                                        temp.Section = currentVal;
                                     }
                                     if (currentCol.Equals("Type"))
                                     {
-                                        temp.Type = reader.GetString(0);
+                                        temp.Type = currentVal;
                                     }
                                     if (currentCol.Equals("Link"))
                                     {
-                                        temp.Link = reader.GetString(0);
+                                        temp.Link = currentVal;
                                     }
                                 }
                                 temp.isLink = "true";
@@ -1115,6 +1142,11 @@ namespace FilerService
             searchResults = new ResourceData[files.Length + links.Length];
             files.CopyTo(searchResults, 0);
             links.CopyTo(searchResults, files.Length);
+            SetStatus(HttpStatusCode.OK);
+            if(searchResults.Length == 0)
+            {
+                SetStatus(HttpStatusCode.NoContent);
+            }
             return searchResults;
         }
 
