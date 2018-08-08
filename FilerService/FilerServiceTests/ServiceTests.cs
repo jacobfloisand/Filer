@@ -623,13 +623,14 @@ namespace FilerServiceTests
             e.isLink = "true";
             e.Override = "true";
             Response s = client.DoPostAsync("save", e).Result;
-  //          Assert.AreEqual(s.Status, HttpStatusCode.Accepted);
+            //          Assert.AreEqual(s.Status, HttpStatusCode.Accepted);
 
-            Response response = client.DoGetAsync("Search/US History/The Beginning/Coming to Shore//7/3/2018/Helpful Resources").Result;
+            string date = "7/3/2018";
+            Response response = client.DoGetAsync("Search?Class=US History&Unit=The Beginning&Section=Coming to Shore&Name=HistoryLink&Date=7/3/2018&Type=Helpful Resources").Result;
             Assert.IsTrue(response.Data[0] != null);
-            Assert.AreEqual(response.Data.Length, 1);
-            Assert.AreEqual(response.Data[0].FileName, "HistoryDoc");
+            Assert.IsTrue(response.Data[0].FileName == null);
             Assert.AreEqual(response.Data[0].LinkName, "HistoryLink");
+            Assert.AreEqual(response.Data.Length, 1);
 
             Response t = client.DoPostAsync("delete", d).Result;
             Assert.AreEqual(s.Status, HttpStatusCode.OK);
