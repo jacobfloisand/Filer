@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using Microsoft.CSharp;
 using System.IO;
+using System.Net.Http;
 
 namespace FilerServiceTests
 {
@@ -152,7 +153,7 @@ namespace FilerServiceTests
             Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
 
             Response s = client.DoPostAsync("save", d).Result;
-            Assert.AreEqual(s.Status, HttpStatusCode.Accepted);
+            Assert.AreEqual(s.Status, HttpStatusCode.Conflict);
 
             Response t = client.DoPostAsync("delete", d).Result;
             Assert.AreEqual(t.Status, HttpStatusCode.OK);
@@ -179,8 +180,8 @@ namespace FilerServiceTests
             Response s = client.DoPostAsync("save", d).Result;
             Assert.AreEqual(s.Status, HttpStatusCode.Accepted);
 
-            dynamic a = client.DoGetAsync("Search/US History/The Beginning/Coming to Shore/HistoryLink/7/3/2018/Helpful Resources").Result;
-            Assert.AreEqual(a.L1Address, "www.historycnn.com");
+            Response response = client.DoGetAsync("Search?Class=US History&Unit=The Beginning&Section=Coming to Shore&Name=HistoryLink&Date=7/3/2018&Type=Helpful Resources").Result;
+            Assert.AreEqual((string) response.Data[0].Link, "www.historycnn.com");
 
             //Deletes the link from DB.
             Response t = client.DoPostAsync("delete", d).Result;
@@ -188,7 +189,7 @@ namespace FilerServiceTests
         }
 
         [TestMethod]
-        public void TestMethod10()//This won't work until we implement do Search.
+        public void TestMethod10()//This won't work until we implement Get full file.
         {
             //Make sure previous file is overridden when true. And not overriden when false.
             dynamic d = new ExpandoObject();
@@ -210,8 +211,8 @@ namespace FilerServiceTests
             Response s = client.DoPostAsync("save", d).Result;
             Assert.AreEqual(s.Status, HttpStatusCode.Accepted);
 
-            dynamic a = client.DoGetAsync("File/US History/The Beginning/Coming to Shore/HistoryDoc").Result;
-            Assert.AreEqual(a.File, "This is a nice story about the gunshot that was heard all around the world.");
+            Response response = client.DoGetAsync("File?Class=US History&Unit=The Beginning&Section=Coming to Shore&Name=HistoryDoc").Result;
+            Assert.AreEqual((string) response.Data.File, "This is a nice story about the gunshot that was heard all around the world.");
 
             Response t = client.DoPostAsync("delete", d).Result;
             Assert.AreEqual(t.Status, HttpStatusCode.OK);
@@ -421,7 +422,7 @@ namespace FilerServiceTests
         [TestMethod]
         public void TestMethod16()
         {
-            //Make sure file is actually deleted.
+            //Make sure file is actually deleted. Requires DoSearch
             dynamic d = new ExpandoObject();
             d.File = "This is the history of the united states beginning with its founding fathers...";
             d.Date = "7/3/2018";
@@ -438,9 +439,8 @@ namespace FilerServiceTests
             Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
             Response s = client.DoPostAsync("delete", d).Result;
             Assert.AreEqual(s.Status, HttpStatusCode.OK);
-            dynamic a = client.DoGetAsync("Search/US History/The Beginning/Coming to Shore/HistoryDoc/7/3/2018/Helpful Resources").Result;
-            Assert.AreEqual(a.NumFiles, 0);
-            Assert.AreEqual(a.NumLinks, 0);
+            Response response = client.DoGetAsync("Search?Class=US History&Unit=The Beginning&Section=Coming to Shore&Name=HistoryDoc&Date=7/3/2018&Type=Helpful Resources").Result;
+            Assert.AreEqual(HttpStatusCode.NoContent, response.Status);
         }
 
         [TestMethod]
@@ -461,9 +461,8 @@ namespace FilerServiceTests
             Assert.AreEqual(r.Status, HttpStatusCode.Accepted);
             Response s = client.DoPostAsync("delete", d).Result;
             Assert.AreEqual(s.Status, HttpStatusCode.OK);
-            dynamic a = client.DoGetAsync("Search/US History/The Beginning/Coming to Shore/HistoryLink/7/3/2018/Helpful Resources").Result;
-            Assert.AreEqual(a.NumFiles, 0);
-            Assert.AreEqual(a.NumLinks, 0);
+            Response response = client.DoGetAsync("Search?Class=US History&Unit=The Beginning&Section=Coming to Shore&Name=HistoryLink&Date=7/3/2018&Type=Helpful Resources").Result;
+            Assert.AreEqual(HttpStatusCode.NoContent, response.Status);
         }
 
         [TestMethod]
@@ -624,16 +623,16 @@ namespace FilerServiceTests
             Response s = client.DoPostAsync("save", e).Result;
             Assert.AreEqual(s.Status, HttpStatusCode.Accepted);
 
-            dynamic a = client.DoGetAsync("Search/US History/The Beginning/Coming to Shore//7/3/2018/Helpful Resources").Result;
-            Assert.AreEqual(a.NumFiles, 1);
-            Assert.AreEqual(a.NumLinks, 1);
-            Assert.AreEqual(a.F1Name, "HistoryDoc");
-            Assert.AreEqual(a.L1Name, "HistoryLink");
+            Response response = client.DoGetAsync("Search?Class=US History&Unit=The Beginning&Section=Coming to Shore&Name=HistoryLink&Date=7/3/2018&Type=Helpful Resources").Result;
+            Assert.IsTrue(response.Data[0] != null);
+            Assert.IsTrue(response.Data[0].FileName == null);
+            Assert.AreEqual((string) response.Data[0].LinkName, "HistoryLink");
+            Assert.AreEqual(response.Data.Count, 1);
 
             Response t = client.DoPostAsync("delete", d).Result;
-            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+            Assert.AreEqual(t.Status, HttpStatusCode.OK);
             Response u = client.DoPostAsync("delete", e).Result;
-            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+            Assert.AreEqual(u.Status, HttpStatusCode.OK);
         }
 
         [TestMethod]
@@ -668,16 +667,16 @@ namespace FilerServiceTests
             Response s = client.DoPostAsync("save", e).Result;
             Assert.AreEqual(s.Status, HttpStatusCode.Accepted);
 
-            dynamic a = client.DoGetAsync("Search/US History/The Beginning///7/3/2018/Helpful Resources").Result;
-            Assert.AreEqual(a.NumFiles, 1);
-            Assert.AreEqual(a.NumLinks, 1);
-            Assert.AreEqual(a.F1Name, "HistoryDoc");
-            Assert.AreEqual(a.L1Name, "HistoryLink");
+            Response v = client.DoGetAsync("Search?Unit=The Beginning&Section=Coming to Shore&Type=Helpful Resources&Date=7/3/2018").Result;
+            Assert.AreEqual((string) v.Data[0].FileName, "HistoryDoc");
+            Assert.AreEqual((string)v.Data[1].LinkName, "HistoryLink");
+            Assert.AreEqual(v.Data.Count, 2);
+
 
             Response t = client.DoPostAsync("delete", d).Result;
-            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+            Assert.AreEqual(t.Status, HttpStatusCode.OK);
             Response u = client.DoPostAsync("delete", e).Result;
-            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+            Assert.AreEqual(u.Status, HttpStatusCode.OK);
         }
         [TestMethod]
         public void TestMethod32()
@@ -704,23 +703,21 @@ namespace FilerServiceTests
             e.LinkName = "HistoryLink";
             e.Class = "US History";
             e.Unit = "The Beginning";
-            e.Section = "Coming to Shore";
             e.Type = "Helpful Resources";
             e.isLink = "true";
             e.Override = "true";
             Response s = client.DoPostAsync("save", e).Result;
             Assert.AreEqual(s.Status, HttpStatusCode.Accepted);
 
-            dynamic a = client.DoGetAsync("Search/US History/The Beginning///7/3/2018/Helpful Resources").Result;
-            Assert.AreEqual(a.NumFiles, 1);
-            Assert.AreEqual(a.NumLinks, 1);
-            Assert.AreEqual(a.F1Name, "HistoryDoc");
-            Assert.AreEqual(a.L1Name, "HistoryLink");
+            Response response = client.DoGetAsync("Search?Class=US History&Unit=The Beginning&Date=7/3/2018&Type=Helpful Resources").Result;
+            Assert.AreEqual((string) response.Data[0].FileName, "HistoryDoc");
+            Assert.AreEqual((string) response.Data[1].LinkName, "HistoryLink");
+            Assert.AreEqual(response.Data.Count, 2);
 
             Response t = client.DoPostAsync("delete", d).Result;
-            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+            Assert.AreEqual(t.Status, HttpStatusCode.OK);
             Response u = client.DoPostAsync("delete", e).Result;
-            Assert.AreEqual(s.Status, HttpStatusCode.OK);
+            Assert.AreEqual(u.Status, HttpStatusCode.OK);
         }
 
         [TestMethod]
@@ -746,7 +743,8 @@ namespace FilerServiceTests
                 Assert.AreEqual(e.Status, HttpStatusCode.Accepted);
             }
 
-            Assert.AreEqual(e.NumFiles, 30);
+            Response response = client.DoGetAsync("Search?Class=US History&Unit=The Beginning&Section=Coming to Shore&Date=7/3/2018&Type=Helpful Resources").Result;
+            Assert.AreEqual(response.Data.Count, 30);
 
             for (int i = 0; i < 30; i++)
             {
@@ -759,7 +757,7 @@ namespace FilerServiceTests
         public void TestMethod34()
         {
             //Do search returns 204 if there is nothing to return.
-            Response r = client.DoGetAsync("Search/US History/The Beginning/Coming to Shore//7/3/2018/Helpful Resources").Result;
+            Response r = client.DoGetAsync("Search?Class=US History&Unit=The Beginning&Section=Coming to Shore&Date=7/3/2018&Type=Helpful Resources").Result;
             Assert.AreEqual(r.Status, HttpStatusCode.NoContent);
         }
 
