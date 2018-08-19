@@ -118,9 +118,9 @@
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(157, 138);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(89, 13);
+            this.label2.Size = new System.Drawing.Size(35, 13);
             this.label2.TabIndex = 8;
-            this.label2.Text = "File Name or Link";
+            this.label2.Text = "Name";
             // 
             // ClassLabel
             // 
@@ -166,6 +166,7 @@
             this.SaveButton.TabIndex = 8;
             this.SaveButton.Text = "Save";
             this.SaveButton.UseVisualStyleBackColor = true;
+            this.SaveButton.Click += new System.EventHandler(this.SaveButton_Click);
             // 
             // SaveLinkButton
             // 
@@ -175,6 +176,7 @@
             this.SaveLinkButton.TabIndex = 9;
             this.SaveLinkButton.Text = "Save Link";
             this.SaveLinkButton.UseVisualStyleBackColor = true;
+            this.SaveLinkButton.Click += new System.EventHandler(this.SaveLinkButton_Click);
             // 
             // SearchButton
             // 
@@ -184,6 +186,7 @@
             this.SearchButton.TabIndex = 10;
             this.SearchButton.Text = "Search";
             this.SearchButton.UseVisualStyleBackColor = true;
+            this.SearchButton.Click += new System.EventHandler(this.SearchButton_Click);
             // 
             // ListButton
             // 
@@ -323,11 +326,12 @@
         private System.Windows.Forms.Label FiledLabel;
         private System.Windows.Forms.Label UnfiledLabel;
         private System.Windows.Forms.CheckedListBox ToDoCheckedList;
-        private System.Windows.Forms.ListBox ResultListBox;
+        public System.Windows.Forms.ListBox ResultListBox;
         private System.Windows.Forms.ListBox UnfiledListBox;
         private System.Windows.Forms.ListBox FiledListBox;
         private System.Windows.Forms.TextBox NameTextBox;
         private System.Windows.Forms.Button DateButton;
         private System.Windows.Forms.TextBox DateTextBox;
+
     }
 }
