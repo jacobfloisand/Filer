@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -17,6 +18,7 @@ namespace FilerClient
             GUI = _GUI;
             GUI.SaveEvent += SaveAsync;
             GUI.SearchEvent += SearchAsync;
+            GUI.GetFullFileEvent += GetFullFileAsync;
         }
 
         private HttpClient MakeClient()
@@ -47,9 +49,45 @@ namespace FilerClient
 
         public async void SaveAsync(string File, string Address, string Date, string FileName, string LinkName, string Class, string Unit, string Section, string Type, string isLink, string Override)
         {
-            using (HttpClient client = MakeClient()) //TODO - We need an if statement that executes if user is at Floisand Company Capital.(Or that tries both uri's)
+            using (HttpClient client = MakeClient())
             {
                 dynamic data = new ExpandoObject();
+                if(File == null || File.Equals(""))
+                {
+                    File = null;
+                }
+                if (Address == null || Address.Equals(""))
+                {
+                    Address = null;
+                }
+                if (Date == null || Date.Equals(""))
+                {
+                    Date = null;
+                }
+                if (FileName == null || FileName.Equals(""))
+                {
+                    FileName = null;
+                }
+                if (LinkName == null || LinkName.Equals(""))
+                {
+                    LinkName = null;
+                }
+                if (Class == null || Class.Equals(""))
+                {
+                    Class = null;
+                }
+                if (Unit == null || Unit.Equals(""))
+                {
+                    Unit = null;
+                }
+                if (Section == null || Section.Equals(""))
+                {
+                    Section = null;
+                }
+                if (Type == null || Type.Equals(""))
+                {
+                    Type = null;
+                }
                 data.File = File;
                 data.Link = Address;
                 data.Date = Date;
@@ -66,13 +104,27 @@ namespace FilerClient
                 string stringResponse = response.Content.ReadAsStringAsync().Result;
                 dynamic deserializedResponse = JsonConvert.DeserializeObject(stringResponse);
                 int statusCode = (int)response.StatusCode;
-                if (statusCode == 202 || statusCode == 409) //If it's 409 we need a popup that lets the user override.
+                if (statusCode == 202) //If it's 409 we need a popup that lets the user override.
                 {
+                    GUI.GenerateInfoBox("Success!");
                     return;
                 }
-                //TODO: If it comes back with 403 we need to let the user know that something might be missing.
+                if (statusCode == 409)
+                {
+                    if(GUI.LaunchOverridePopUp())
+                    {
+                        SaveAsync(File, Address, Date, FileName, LinkName, Class, Unit, Section, Type, isLink, "true");
+                    }
+                    return;
+                }
+                if (statusCode == 403)
+                {
+                    GUI.GenerateInfoBox("Either the name or the file was missing.");
+                    return;
+
+                }
                 throw new Exception("We got a bad status code from SaveAsync");
-                
+
             }
         }
 
@@ -128,6 +180,7 @@ namespace FilerClient
                     return;
                 }
                 GUI.foundInSearch = new FilerView.SearchData[deserializedResponse.Count];
+                GUI.ResultListBox.Items.Clear();
                 for(int i = 0; i < deserializedResponse.Count; i++)
                 {
                     if (((string)deserializedResponse[i].isLink).Equals("false"))
@@ -152,9 +205,79 @@ namespace FilerClient
                         isLink = deserializedResponse[i].isLink
                     };
                 }
-                //TODO: delete all of the extra entries that may have been left over from last time.
 
             }
+        }
+
+        public async void GetFullFileAsync(string Class, string Unit, string Section, string Name)
+        {
+            string serviceString = "File?";
+            bool ranAtLeastOne = false;
+            if (Class != null && !Class.Equals(""))
+            {
+                serviceString += "Class=" + Class + "&";
+                ranAtLeastOne = true;
+            }
+            if (Unit != null && !Unit.Equals(""))
+            {
+                serviceString += "Unit=" + Unit + "&";
+                ranAtLeastOne = true;
+            }
+            if (Section != null && !Section.Equals(""))
+            {
+                serviceString += "Section=" + Section + "&";
+                ranAtLeastOne = true;
+            }
+            if (Name != null && !Name.Equals(""))
+            {
+                serviceString += "Name=" + Name + "&";
+                ranAtLeastOne = true;
+            }
+
+            char[] chars = serviceString.ToCharArray();
+            serviceString = "";
+            for (int i = 0; i < chars.Length - 1; i++)
+            {
+                serviceString += chars[i];
+            }
+
+
+            using (HttpClient client = MakeClient())
+            {
+                HttpResponseMessage response = await client.GetAsync(serviceString);
+                string stringResponse = response.Content.ReadAsStringAsync().Result;
+                dynamic deserializedResponse = JsonConvert.DeserializeObject(stringResponse);
+                int statusCode = (int)response.StatusCode;
+                if (statusCode == 200)
+                {
+                    //Do something with the file!
+                    string fileString = (string)deserializedResponse.File;
+                    string extension = getExtensionOfFileString(fileString);
+                    string path = Directory.GetCurrentDirectory();
+                    path = Path.Combine(path, "Mary's File Openner"); //TODO - we must append the suffix. ie .pdf.
+                    path = path + extension;
+                    File.WriteAllText(path, fileString);
+                    System.Diagnostics.Process.Start(path); //This will use the suffix to know how to open the file.
+                    return; 
+                }
+                if (statusCode == 409)
+                {
+                    //TODO: Something went wrong when getting that file... textbox
+                    return;
+                }
+                if (statusCode == 403)
+                {
+                    //TODO:Display a textbox that says to at least supply a name!
+                    return;
+                }
+                //TODO: Display a textbox that says something went wrong with the server. Not sure what.
+
+            }
+        }
+
+        private string getExtensionOfFileString(string fileString)
+        {
+            return ".pdf";
         }
     }
 }

@@ -59,6 +59,18 @@
     <Compile Include="FilerView.Designer.cs">
       <DependentUpon>FilerView.cs</DependentUpon>
     </Compile>
+    <Compile Include="InfoBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InfoBox.Designer.cs">
+      <DependentUpon>InfoBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Overridebox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Overridebox.Designer.cs">
+      <DependentUpon>Overridebox.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SearchResultOptionPopUp.cs">
@@ -72,6 +84,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FilerView.resx">
       <DependentUpon>FilerView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InfoBox.resx">
+      <DependentUpon>InfoBox.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Overridebox.resx">
+      <DependentUpon>Overridebox.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

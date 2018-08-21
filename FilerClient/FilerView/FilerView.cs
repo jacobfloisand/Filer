@@ -66,6 +66,7 @@ namespace FilerClient
             var result = linkPopUp.ShowDialog();
             if(result == DialogResult.OK)
             {
+                
                 string Link = linkPopUp.ReturnValue;
                 string Date = DateTextBox.Text;
                 string LinkName = NameTextBox.Text;
@@ -97,16 +98,30 @@ namespace FilerClient
             SearchEvent?.Invoke(Class, Unit, Section, Name, Date, Type);
         }
 
+        public void GenerateInfoBox(string v)
+        {
+            InfoBox box = new InfoBox(v);
+            box.ShowDialog();
+        }
+
         private void ResultListBox_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             int index = this.ResultListBox.IndexFromPoint(e.Location);
             if (index != System.Windows.Forms.ListBox.NoMatches)
             {
-                SearchResultOptionPopUp popUp = new SearchResultOptionPopUp("hello"); //We pass it the name of the file that was clicked.
+                string contents = foundInSearch[index].FileName;
+                if(contents == null)
+                {
+                    contents = foundInSearch[index].Link;
+                }
+                SearchResultOptionPopUp popUp = new SearchResultOptionPopUp(contents); //We pass it the name of the file that was clicked.
                 popUp.ShowDialog();
                 if(popUp.DialogResult == DialogResult.OK) //Runs if they want to open the file.
                 {
-
+                    if (foundInSearch[index].isLink.Equals("false"))
+                    {
+                        GetFullFileEvent?.Invoke(foundInSearch[index].Class, foundInSearch[index].Unit, foundInSearch[index].Section, foundInSearch[index].FileName);
+                    }
                 }
                 else if(popUp.DialogResult == DialogResult.No) //Runs if they want to Delete the file/link.
                 {
@@ -115,12 +130,24 @@ namespace FilerClient
                 else if(popUp.DialogResult == DialogResult.Cancel)
                 {
                     //Do nothing.
+                    
                 }
                 else
                 {
-                    throw new Exception("Someone found a way to avoid opening, deleting, or canceling. How did you do it?");
+                    throw new Exception("Someone found a way to avoid opening, deleting, or canceling. How did they do it?");
                 }
             }
+        }
+        public bool LaunchOverridePopUp()
+        {
+            Overridebox box = new Overridebox();
+            var result = box.ShowDialog();
+            if(result == DialogResult.OK)
+            {
+                return true;
+            }
+            return false;
+                
         }
 
         public class SearchData
